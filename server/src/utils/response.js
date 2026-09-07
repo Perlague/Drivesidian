@@ -21,4 +21,14 @@ const validationError = (res, zodError) => {
   res.status(400).json({ success: false, error: { message, fields } });
 };
 
-module.exports = { success, error, validationError };
+// yours: lo que mandó el cliente. server: el estado actual en Postgres.
+// Usado solo por notes.update cuando la version no coincide.
+const conflict = (res, yours, server) => {
+  res.status(409).json({
+    success: false,
+    error: { message: 'La nota fue modificada por otra fuente. Revisa ambas versiones.' },
+    conflict: { yours, server },
+  });
+};
+
+module.exports = { success, error, validationError, conflict };
