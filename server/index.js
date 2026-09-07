@@ -15,6 +15,7 @@ app.get('/health', (req, res) => {
 
 app.use('/api/users', require('./src/routes/users.routes'));
 app.use('/api/notes', require('./src/routes/notes.routes'));
+app.use('/api/agent-tokens', require('./src/routes/agentTokens.routes'));
 
 app.listen(PORT, () => {
   console.log(`Drivesidian server escuchando en el puerto ${PORT}`);

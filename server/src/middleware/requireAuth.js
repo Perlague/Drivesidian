@@ -1,8 +1,12 @@
 'use strict';
 
+const crypto = require('crypto');
 const { verify } = require('../utils/jwt');
 const { error } = require('../utils/response');
 const { SESSION_COOKIE_NAME } = require('../config');
+const agentTokensModel = require('../models/agentTokens.model');
+
+const hashJti = (jti) => crypto.createHash('sha256').update(jti).digest('hex');
 
 // Parser manual de cookies (sin cookie-parser): solo necesitamos LEER una
 // cookie en requests entrantes, Express ya trae res.cookie() para escribirla.
@@ -22,7 +26,7 @@ const parseCookies = (cookieHeader = '') => {
 // origen y vida útil: sesión web (cookie httpOnly) o agent token (header
 // Authorization: Bearer). El claim `type` del payload distingue cuál es cuál
 // para el resto de la app (ver resolución de conflictos de notes).
-const requireAuth = (req, res, next) => {
+const requireAuth = async (req, res, next) => {
   const authHeader = req.headers.authorization;
   let token = null;
 
@@ -40,6 +44,16 @@ const requireAuth = (req, res, next) => {
   const payload = verify(token, process.env.JWT_SECRET);
   if (!payload) {
     return error(res, 'Sesión inválida o expirada.', 401);
+  }
+
+  // La sesión web no toca la base (JWT corto, sin revocación individual).
+  // El agent token sí: es de larga duración y debe poder revocarse desde el
+  // panel, así que cada request valida contra agent_tokens.
+  if (payload.type === 'agent') {
+    const activeToken = await agentTokensModel.findActiveByHash(hashJti(payload.jti));
+    if (!activeToken || activeToken.user_id !== payload.userId) {
+      return error(res, 'Token de agente revocado o inválido.', 401);
+    }
   }
 
   req.auth = { type: payload.type, userId: payload.userId, role: payload.role };
