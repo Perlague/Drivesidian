@@ -18,6 +18,7 @@
     "dotenv": "^17.4.2",
     "express": "^5.2.1",
     "pg": "^8.20.0",
+    "qrcode": "^1.5.4",
     "zod": "^4.5.4"
   },
   "devDependencies": {
