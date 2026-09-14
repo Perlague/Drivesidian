@@ -13,6 +13,12 @@ const loginSchema = z.object({
       error: (issue) => (issue.input === undefined ? 'La contraseña es requerida.' : 'La contraseña debe ser texto.'),
     })
     .min(1, 'La contraseña no puede estar vacía.'),
+  totp_code: z
+    .string({
+      error: () => 'totp_code debe ser texto.',
+    })
+    .regex(/^\d{6}$/, 'totp_code debe ser un código de 6 dígitos.')
+    .optional(),
 });
 
 module.exports = { loginSchema };

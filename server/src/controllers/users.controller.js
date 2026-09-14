@@ -4,10 +4,17 @@ const qrcode = require('qrcode');
 const { loginSchema } = require('../schemas/users/login');
 const { registerSchema } = require('../schemas/users/register');
 const { confirm2faSchema } = require('../schemas/users/confirm2fa');
-const { findByEmail, findById, create, saveTotpSecret } = require('../models/users.model');
+const {
+  findByEmail,
+  findById,
+  create,
+  saveTotpSecret,
+  incrementFailedAttempts,
+  resetFailedAttempts,
+} = require('../models/users.model');
 const { hashPassword, verifyPassword } = require('../utils/password');
 const { generateSecret, buildOtpAuthUri, verifyTotp } = require('../utils/totp');
-const { encryptSecret } = require('../utils/secretCrypto');
+const { encryptSecret, decryptSecret } = require('../utils/secretCrypto');
 const { sign } = require('../utils/jwt');
 const { success, error, validationError } = require('../utils/response');
 const { SESSION_COOKIE_NAME, SESSION_TTL_SECONDS } = require('../config');
@@ -45,7 +52,7 @@ const login = async (req, res) => {
     return validationError(res, parsed.error);
   }
 
-  const { email, password } = parsed.data;
+  const { email, password, totp_code: totpCode } = parsed.data;
   const user = await findByEmail(email);
   if (!user) {
     return error(res, 'Correo o contraseña incorrectos.', 401);
@@ -56,8 +63,27 @@ const login = async (req, res) => {
     return error(res, 'Correo o contraseña incorrectos.', 401);
   }
 
-  // TODO: exigir código TOTP acá una vez implementado el enrolamiento de 2FA
-  // (cuando user.totp_secret no sea null).
+  if (user.locked_until && new Date(user.locked_until) > new Date()) {
+    return error(
+      res,
+      'Cuenta bloqueada temporalmente por múltiples intentos fallidos de 2FA. Intenta de nuevo más tarde.',
+      403,
+    );
+  }
+
+  if (user.totp_secret) {
+    if (!totpCode) {
+      return error(res, 'Se requiere el código de autenticación de dos factores.', 400);
+    }
+
+    const decryptedSecret = decryptSecret(user.totp_secret);
+    if (!verifyTotp(decryptedSecret, totpCode)) {
+      await incrementFailedAttempts(user.id);
+      return error(res, 'Código de autenticación incorrecto.', 401);
+    }
+
+    await resetFailedAttempts(user.id);
+  }
 
   const token = sign(
     { type: 'user', userId: user.id, role: user.role },

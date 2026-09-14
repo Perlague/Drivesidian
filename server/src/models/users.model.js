@@ -43,4 +43,35 @@ const saveTotpSecret = async (userId, encryptedSecret) => {
   return result.rows[0] || null;
 };
 
-module.exports = { findByEmail, findById, create, saveTotpSecret };
+// Incrementa y bloquea en una sola sentencia atómica (evita una carrera
+// leer-luego-escribir entre requests concurrentes del mismo usuario).
+const incrementFailedAttempts = async (userId) => {
+  const result = await pool.query(
+    `UPDATE users
+     SET failed_2fa_attempts = failed_2fa_attempts + 1,
+         locked_until = CASE
+           WHEN failed_2fa_attempts + 1 >= 5 THEN now() + interval '15 minutes'
+           ELSE locked_until
+         END
+     WHERE id = $1
+     RETURNING failed_2fa_attempts, locked_until`,
+    [userId],
+  );
+  return result.rows[0];
+};
+
+const resetFailedAttempts = async (userId) => {
+  await pool.query(
+    `UPDATE users SET failed_2fa_attempts = 0, locked_until = NULL WHERE id = $1`,
+    [userId],
+  );
+};
+
+module.exports = {
+  findByEmail,
+  findById,
+  create,
+  saveTotpSecret,
+  incrementFailedAttempts,
+  resetFailedAttempts,
+};
