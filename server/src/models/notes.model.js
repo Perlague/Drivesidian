@@ -60,4 +60,28 @@ const updateWithVersionCheck = async (id, userId, content, expectedVersion) => {
   return result.rows[0] || null;
 };
 
-module.exports = { upsertFromAgent, findAllByUser, findByIdForUser, updateWithVersionCheck };
+// Usado por el worker de sincronización: todas las notas pendientes de
+// cualquier usuario, para agruparlas por dueño y subirlas en lotes.
+const findAllPending = async () => {
+  const result = await pool.query(
+    `SELECT id, user_id, vault_path, content
+     FROM notes
+     WHERE sync_status = 'pending'
+     ORDER BY user_id, updated_at ASC`,
+  );
+  return result.rows;
+};
+
+const markSynced = async (ids) => {
+  if (ids.length === 0) return;
+  await pool.query(`UPDATE notes SET sync_status = 'synced' WHERE id = ANY($1::bigint[])`, [ids]);
+};
+
+module.exports = {
+  upsertFromAgent,
+  findAllByUser,
+  findByIdForUser,
+  updateWithVersionCheck,
+  findAllPending,
+  markSynced,
+};
