@@ -32,4 +32,15 @@ const create = async (email, passwordHash) => {
   return result.rows[0];
 };
 
-module.exports = { findByEmail, findById, create };
+const saveTotpSecret = async (userId, encryptedSecret) => {
+  const result = await pool.query(
+    `UPDATE users
+     SET totp_secret = $1
+     WHERE id = $2
+     RETURNING id, email, role`,
+    [encryptedSecret, userId],
+  );
+  return result.rows[0] || null;
+};
+
+module.exports = { findByEmail, findById, create, saveTotpSecret };

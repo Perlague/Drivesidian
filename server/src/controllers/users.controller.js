@@ -1,9 +1,13 @@
 'use strict';
 
+const qrcode = require('qrcode');
 const { loginSchema } = require('../schemas/users/login');
 const { registerSchema } = require('../schemas/users/register');
-const { findByEmail, findById, create } = require('../models/users.model');
+const { confirm2faSchema } = require('../schemas/users/confirm2fa');
+const { findByEmail, findById, create, saveTotpSecret } = require('../models/users.model');
 const { hashPassword, verifyPassword } = require('../utils/password');
+const { generateSecret, buildOtpAuthUri, verifyTotp } = require('../utils/totp');
+const { encryptSecret } = require('../utils/secretCrypto');
 const { sign } = require('../utils/jwt');
 const { success, error, validationError } = require('../utils/response');
 const { SESSION_COOKIE_NAME, SESSION_TTL_SECONDS } = require('../config');
@@ -79,4 +83,33 @@ const me = async (req, res) => {
   success(res, user);
 };
 
-module.exports = { register, login, me };
+// POST /api/users/2fa/enroll — genera el secreto pero NO lo guarda todavía.
+// Se persiste solo si /2fa/confirm valida un código correcto (ver commit).
+const enroll2fa = async (req, res) => {
+  const user = await findById(req.auth.userId);
+  const secret = generateSecret();
+  const otpauthUri = buildOtpAuthUri(secret, user.email);
+  const qrDataUrl = await qrcode.toDataURL(otpauthUri);
+
+  success(res, { secret, otpauth_uri: otpauthUri, qr_data_url: qrDataUrl });
+};
+
+// POST /api/users/2fa/confirm — recibe de vuelta el secreto que dio /enroll
+// junto con el primer código; si coincide, ahí sí se cifra y se guarda.
+const confirm2fa = async (req, res) => {
+  const parsed = confirm2faSchema.safeParse(req.body);
+  if (!parsed.success) {
+    return validationError(res, parsed.error);
+  }
+
+  const { secret, code } = parsed.data;
+  if (!verifyTotp(secret, code)) {
+    return error(res, 'Código incorrecto.', 401);
+  }
+
+  const encrypted = encryptSecret(secret);
+  await saveTotpSecret(req.auth.userId, encrypted);
+  success(res, { message: '2FA habilitado correctamente.' });
+};
+
+module.exports = { register, login, me, enroll2fa, confirm2fa };
