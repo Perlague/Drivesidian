@@ -22,4 +22,14 @@ const findById = async (id) => {
   return result.rows[0] || null;
 };
 
-module.exports = { findByEmail, findById };
+const create = async (email, passwordHash) => {
+  const result = await pool.query(
+    `INSERT INTO users (email, password_hash)
+     VALUES ($1, $2)
+     RETURNING id, email, role, created_at`,
+    [email, passwordHash],
+  );
+  return result.rows[0];
+};
+
+module.exports = { findByEmail, findById, create };

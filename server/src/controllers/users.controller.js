@@ -1,11 +1,39 @@
 'use strict';
 
 const { loginSchema } = require('../schemas/users/login');
-const { findByEmail, findById } = require('../models/users.model');
-const { verifyPassword } = require('../utils/password');
+const { registerSchema } = require('../schemas/users/register');
+const { findByEmail, findById, create } = require('../models/users.model');
+const { hashPassword, verifyPassword } = require('../utils/password');
 const { sign } = require('../utils/jwt');
 const { success, error, validationError } = require('../utils/response');
 const { SESSION_COOKIE_NAME, SESSION_TTL_SECONDS } = require('../config');
+
+const register = async (req, res) => {
+  const parsed = registerSchema.safeParse(req.body);
+  if (!parsed.success) {
+    return validationError(res, parsed.error);
+  }
+
+  const { email, password } = parsed.data;
+  const existing = await findByEmail(email);
+  if (existing) {
+    return error(res, 'Ya existe una cuenta con ese correo.', 409);
+  }
+
+  const passwordHash = await hashPassword(password);
+  try {
+    const user = await create(email, passwordHash);
+    success(res, user, 201);
+  } catch (err) {
+    // Colchón contra la carrera entre el findByEmail de arriba y este insert
+    // (dos registros simultáneos con el mismo correo); el UNIQUE de la
+    // migración es la garantía real.
+    if (err.code === '23505') {
+      return error(res, 'Ya existe una cuenta con ese correo.', 409);
+    }
+    throw err;
+  }
+};
 
 const login = async (req, res) => {
   const parsed = loginSchema.safeParse(req.body);
@@ -51,4 +79,4 @@ const me = async (req, res) => {
   success(res, user);
 };
 
-module.exports = { login, me };
+module.exports = { register, login, me };
