@@ -2,6 +2,7 @@
 
 const notesModel = require('../models/notes.model');
 const { putFile } = require('../utils/github');
+const { buildRepoPath } = require('../utils/repoPath');
 const { notify } = require('../utils/ntfy');
 
 const DEFAULT_INTERVAL_MS = 5 * 60 * 1000; // 5 minutos
@@ -29,11 +30,14 @@ const runSyncCycle = async () => {
     const syncedIds = [];
 
     for (const note of notes) {
+      // El repo es compartido: cada usuario escribe bajo su propia carpeta,
+      // así que dos notas con el mismo vault_path no se pisan entre cuentas.
+      const repoPath = buildRepoPath(userId, note.email, note.vault_path);
       try {
-        await putFile(note.vault_path, note.content, `Sync: ${note.vault_path}`);
+        await putFile(repoPath, note.content, `Sync: ${note.vault_path}`);
         syncedIds.push(note.id);
       } catch (err) {
-        console.error(`[syncWorker] fallo subiendo "${note.vault_path}" (usuario ${userId}):`, err.message);
+        console.error(`[syncWorker] fallo subiendo "${repoPath}" (usuario ${userId}):`, err.message);
       }
     }
 

@@ -61,13 +61,15 @@ const updateWithVersionCheck = async (id, userId, content, expectedVersion) => {
 };
 
 // Usado por el worker de sincronización: todas las notas pendientes de
-// cualquier usuario, para agruparlas por dueño y subirlas en lotes.
+// cualquier usuario, para agruparlas por dueño y subirlas en lotes. Trae el
+// correo del dueño porque la carpeta del repo se arma con él (ver repoPath).
 const findAllPending = async () => {
   const result = await pool.query(
-    `SELECT id, user_id, vault_path, content
-     FROM notes
-     WHERE sync_status = 'pending'
-     ORDER BY user_id, updated_at ASC`,
+    `SELECT n.id, n.user_id, n.vault_path, n.content, u.email
+     FROM notes n
+     JOIN users u ON u.id = n.user_id
+     WHERE n.sync_status = 'pending'
+     ORDER BY n.user_id, n.updated_at ASC`,
   );
   return result.rows;
 };
