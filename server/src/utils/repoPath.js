@@ -31,10 +31,12 @@ const sanitizeVaultPath = (vaultPath) =>
     .filter((segment) => segment && segment !== '.' && segment !== '..')
     .join('/');
 
-const buildRepoPath = (userId, email, vaultPath) => {
+const buildUserFolder = (userId, email) => {
   const slug = slugFromEmail(email);
-  const folder = slug ? `user-${userId}-${slug}` : `user-${userId}`;
-  return `${folder}/${sanitizeVaultPath(vaultPath)}`;
+  return slug ? `user-${userId}-${slug}` : `user-${userId}`;
 };
 
-module.exports = { slugFromEmail, sanitizeVaultPath, buildRepoPath };
+const buildRepoPath = (userId, email, vaultPath) =>
+  `${buildUserFolder(userId, email)}/${sanitizeVaultPath(vaultPath)}`;
+
+module.exports = { slugFromEmail, sanitizeVaultPath, buildUserFolder, buildRepoPath };
