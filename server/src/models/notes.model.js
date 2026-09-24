@@ -2,6 +2,7 @@
 
 const crypto = require('crypto');
 const pool = require('../db/pool');
+const { SYNC_NOTES_PER_USER } = require('../config');
 
 const hashContent = (content) => crypto.createHash('sha256').update(content).digest('hex');
 
@@ -86,17 +87,37 @@ const updateWithVersionCheck = async (id, userId, content, expectedVersion) => {
   return result.rows[0] || null;
 };
 
-// Usado por el worker de sincronización: todas las notas pendientes de
-// cualquier usuario, para agruparlas por dueño y subirlas en lotes. Trae el
-// correo del dueño porque la carpeta del repo se arma con él (ver repoPath),
-// y la version porque markSynced la compara al cerrar el lote.
-const findAllPending = async () => {
+// Usado por el worker de sincronización. Trae el correo del dueño porque la
+// carpeta del repo se arma con él (ver repoPath) y la version porque
+// markSynced la compara al cerrar el lote.
+//
+// El tope es POR USUARIO, no global: como el orden es por user_id, un tope
+// global dejaría a un usuario con cientos de notas pendientes monopolizando
+// todos los ciclos y a los demás sin sincronizar nunca.
+//
+// La subconsulta elige solo ids, y el contenido se lee después únicamente para
+// esos ids. Si el row_number() se calculara sobre la tabla ya con el content,
+// Postgres materializaría el texto de TODAS las notas pendientes antes de
+// recortar, y el tope dejaría de acotar la memoria, que es justo su razón de ser.
+const findAllPending = async (userId = null, perUserLimit = SYNC_NOTES_PER_USER) => {
   const result = await pool.query(
-    `SELECT n.id, n.user_id, n.vault_path, n.content, n.version, u.email
+    `WITH seleccionadas AS (
+       SELECT id
+       FROM (
+         SELECT id,
+                row_number() OVER (PARTITION BY user_id ORDER BY updated_at ASC) AS rn
+         FROM notes
+         WHERE sync_status = 'pending'
+           AND ($1::bigint IS NULL OR user_id = $1)
+       ) ranked
+       WHERE rn <= $2
+     )
+     SELECT n.id, n.user_id, n.vault_path, n.content, n.version, u.email
      FROM notes n
      JOIN users u ON u.id = n.user_id
-     WHERE n.sync_status = 'pending'
+     WHERE n.id IN (SELECT id FROM seleccionadas)
      ORDER BY n.user_id, n.updated_at ASC`,
+    [userId, perUserLimit],
   );
   return result.rows;
 };

@@ -4,6 +4,7 @@ const notesModel = require('../models/notes.model');
 const { putBatch } = require('../utils/github');
 const { buildRepoPath, buildUserFolder } = require('../utils/repoPath');
 const { notify } = require('../utils/ntfy');
+const { MAX_BATCH_BYTES } = require('../config');
 
 const DEFAULT_INTERVAL_MS = 5 * 60 * 1000; // 5 minutos
 
@@ -17,6 +18,26 @@ const groupByUser = (notes) => {
   return groups;
 };
 
+// Recorta el lote cuando acumula demasiados bytes. El lote es todo o nada, así
+// que un request gigante que GitHub rechace dejaría la cola de ese usuario
+// atascada indefinidamente. Lo que no entra queda pendiente para el ciclo
+// siguiente.
+const takeWithinByteBudget = (notes) => {
+  const included = [];
+  let bytes = 0;
+
+  for (const note of notes) {
+    const size = Buffer.byteLength(note.content, 'utf8');
+    // La primera nota entra siempre: si una sola excede el presupuesto no hay
+    // lote más chico posible, y saltarla para siempre sería peor que intentarlo.
+    if (included.length > 0 && bytes + size > MAX_BATCH_BYTES) break;
+    included.push(note);
+    bytes += size;
+  }
+
+  return { included, bytes };
+};
+
 // Un solo commit por lote de usuario (Git Data API), y una sola notificación
 // por ese lote, nunca por nota individual.
 const runSyncCycle = async () => {
@@ -25,8 +46,16 @@ const runSyncCycle = async () => {
 
   const groups = groupByUser(pending);
 
-  for (const [userId, notes] of groups) {
-    const folder = buildUserFolder(userId, notes[0].email);
+  for (const [userId, pendingForUser] of groups) {
+    const folder = buildUserFolder(userId, pendingForUser[0].email);
+    const { included: notes, bytes } = takeWithinByteBudget(pendingForUser);
+    if (notes.length < pendingForUser.length) {
+      const mib = (bytes / 1024 / 1024).toFixed(1);
+      console.log(
+        `[syncWorker] lote de ${folder} recortado a ${notes.length}/${pendingForUser.length} nota(s) (${mib} MiB); el resto va en el siguiente ciclo`,
+      );
+    }
+
     // El repo es compartido: cada usuario escribe bajo su propia carpeta,
     // así que dos notas con el mismo vault_path no se pisan entre cuentas.
     const files = notes.map((note) => ({
@@ -71,4 +100,4 @@ const startSyncWorker = () => {
   console.log(`[syncWorker] worker de sincronización iniciado (cada ${intervalMs}ms)`);
 };
 
-module.exports = { startSyncWorker, runSyncCycle };
+module.exports = { startSyncWorker, runSyncCycle, takeWithinByteBudget };
