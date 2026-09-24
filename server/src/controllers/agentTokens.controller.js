@@ -4,6 +4,7 @@ const crypto = require('crypto');
 const agentTokensModel = require('../models/agentTokens.model');
 const { sign } = require('../utils/jwt');
 const { success, error } = require('../utils/response');
+const { logSecurityEvent, SEVERITY, EVENTS } = require('../utils/securityLog');
 
 const AGENT_TOKEN_TTL_SECONDS = 60 * 60 * 24 * 365; // 1 año
 
@@ -24,6 +25,13 @@ const create = async (req, res) => {
     process.env.JWT_SECRET,
     AGENT_TOKEN_TTL_SECONDS,
   );
+
+  logSecurityEvent({
+    type: EVENTS.TOKEN_CREATED,
+    userId: req.auth.userId,
+    req,
+    details: { token_id: row.id },
+  });
 
   // El JWT completo se devuelve una sola vez: solo guardamos su hash, así
   // que no hay forma de volver a mostrarlo después de este response.
@@ -53,6 +61,12 @@ const revoke = async (req, res) => {
   if (!revoked) {
     return error(res, 'Token no encontrado o ya estaba revocado.', 404);
   }
+  logSecurityEvent({
+    type: EVENTS.TOKEN_REVOKED,
+    userId: req.auth.userId,
+    req,
+    details: { token_id: revoked.id },
+  });
   success(res, revoked);
 };
 

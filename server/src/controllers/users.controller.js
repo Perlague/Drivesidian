@@ -17,6 +17,7 @@ const { generateSecret, buildOtpAuthUri, verifyTotp } = require('../utils/totp')
 const { encryptSecret, decryptSecret } = require('../utils/secretCrypto');
 const { sign } = require('../utils/jwt');
 const { success, error, validationError } = require('../utils/response');
+const { logSecurityEvent, SEVERITY, EVENTS } = require('../utils/securityLog');
 const { SESSION_COOKIE_NAME, SESSION_TTL_SECONDS } = require('../config');
 
 const register = async (req, res) => {
@@ -34,6 +35,7 @@ const register = async (req, res) => {
   const passwordHash = await hashPassword(password);
   try {
     const user = await create(email, passwordHash);
+    logSecurityEvent({ type: EVENTS.AUTH_REGISTER, userId: user.id, req, details: { email } });
     success(res, user, 201);
   } catch (err) {
     // Colchón contra la carrera entre el findByEmail de arriba y este insert
@@ -55,15 +57,37 @@ const login = async (req, res) => {
   const { email, password, totp_code: totpCode } = parsed.data;
   const user = await findByEmail(email);
   if (!user) {
+    // Sin usuario no hay a quién atribuirlo, pero el evento importa: una
+    // ráfaga de estos desde una IP es enumeración de correos.
+    logSecurityEvent({
+      type: EVENTS.AUTH_LOGIN_FAILED_PASSWORD,
+      severity: SEVERITY.WARN,
+      req,
+      details: { email, reason: 'unknown_email' },
+    });
     return error(res, 'Correo o contraseña incorrectos.', 401);
   }
 
   const passwordOk = await verifyPassword(password, user.password_hash);
   if (!passwordOk) {
+    logSecurityEvent({
+      type: EVENTS.AUTH_LOGIN_FAILED_PASSWORD,
+      severity: SEVERITY.WARN,
+      userId: user.id,
+      req,
+      details: { email, reason: 'bad_password' },
+    });
     return error(res, 'Correo o contraseña incorrectos.', 401);
   }
 
   if (user.locked_until && new Date(user.locked_until) > new Date()) {
+    logSecurityEvent({
+      type: EVENTS.AUTH_LOGIN_BLOCKED,
+      severity: SEVERITY.WARN,
+      userId: user.id,
+      req,
+      details: { locked_until: user.locked_until },
+    });
     return error(
       res,
       'Cuenta bloqueada temporalmente por múltiples intentos fallidos de 2FA. Intenta de nuevo más tarde.',
@@ -78,7 +102,28 @@ const login = async (req, res) => {
 
     const decryptedSecret = decryptSecret(user.totp_secret);
     if (!verifyTotp(decryptedSecret, totpCode)) {
-      await incrementFailedAttempts(user.id);
+      const attempts = await incrementFailedAttempts(user.id);
+      logSecurityEvent({
+        type: EVENTS.AUTH_LOGIN_FAILED_TOTP,
+        severity: SEVERITY.WARN,
+        userId: user.id,
+        req,
+        details: { failed_attempts: attempts.failed_2fa_attempts },
+      });
+      // El bloqueo lo aplica el propio UPDATE de incrementFailedAttempts; acá
+      // solo se reporta el cruce del umbral, que es lo que Guardian querrá ver.
+      if (attempts.locked_until && new Date(attempts.locked_until) > new Date()) {
+        logSecurityEvent({
+          type: EVENTS.AUTH_LOCKOUT,
+          severity: SEVERITY.CRITICAL,
+          userId: user.id,
+          req,
+          details: {
+            failed_attempts: attempts.failed_2fa_attempts,
+            locked_until: attempts.locked_until,
+          },
+        });
+      }
       return error(res, 'Código de autenticación incorrecto.', 401);
     }
 
@@ -98,6 +143,12 @@ const login = async (req, res) => {
     maxAge: SESSION_TTL_SECONDS * 1000,
   });
 
+  logSecurityEvent({
+    type: EVENTS.AUTH_LOGIN_SUCCESS,
+    userId: user.id,
+    req,
+    details: { email: user.email, twofa: Boolean(user.totp_secret) },
+  });
   success(res, { id: user.id, email: user.email, role: user.role });
 };
 
@@ -135,6 +186,7 @@ const confirm2fa = async (req, res) => {
 
   const encrypted = encryptSecret(secret);
   await saveTotpSecret(req.auth.userId, encrypted);
+  logSecurityEvent({ type: EVENTS.TWOFA_ENROLLED, userId: req.auth.userId, req });
   success(res, { message: '2FA habilitado correctamente.' });
 };
 

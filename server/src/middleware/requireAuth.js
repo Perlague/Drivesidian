@@ -3,6 +3,7 @@
 const crypto = require('crypto');
 const { verify } = require('../utils/jwt');
 const { error } = require('../utils/response');
+const { logSecurityEvent, SEVERITY, EVENTS } = require('../utils/securityLog');
 const { SESSION_COOKIE_NAME } = require('../config');
 const agentTokensModel = require('../models/agentTokens.model');
 
@@ -52,6 +53,16 @@ const requireAuth = async (req, res, next) => {
   if (payload.type === 'agent') {
     const activeToken = await agentTokensModel.findActiveByHash(hashJti(payload.jti));
     if (!activeToken || activeToken.user_id !== payload.userId) {
+      // Un agent token con firma válida que ya no está activo significa o un
+      // agente que quedó corriendo tras una revocación, o un token filtrado
+      // en uso. Los dos casos le interesan a Guardian.
+      logSecurityEvent({
+        type: EVENTS.TOKEN_USED_AFTER_REVOKE,
+        severity: SEVERITY.CRITICAL,
+        userId: payload.userId,
+        req,
+        details: { path: req.originalUrl, method: req.method },
+      });
       return error(res, 'Token de agente revocado o inválido.', 401);
     }
   }
