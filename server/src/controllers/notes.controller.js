@@ -17,8 +17,16 @@ const sync = async (req, res) => {
     return validationError(res, parsed.error);
   }
 
-  const note = await notesModel.upsertFromAgent(req.auth.userId, parsed.data.vault_path, parsed.data.content);
-  success(res, note);
+  // changed = false cuando el contenido era idéntico al guardado: la nota no
+  // se reencoló. Se responde 200 igual, porque desde el punto de vista del
+  // agente el reporte se aceptó; el flag va en el payload solo para que pueda
+  // registrarlo en su log.
+  const { note, changed } = await notesModel.upsertFromAgent(
+    req.auth.userId,
+    parsed.data.vault_path,
+    parsed.data.content,
+  );
+  success(res, { ...note, changed });
 };
 
 // GET /api/notes — exclusivo de la web.

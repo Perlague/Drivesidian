@@ -5,8 +5,26 @@ const pool = require('../db/pool');
 
 const hashContent = (content) => crypto.createHash('sha256').update(content).digest('hex');
 
+const NOTE_COLUMNS = 'id, vault_path, content, content_hash, version, sync_status, updated_at';
+
+const findByVaultPath = async (userId, vaultPath) => {
+  const result = await pool.query(
+    `SELECT ${NOTE_COLUMNS} FROM notes WHERE user_id = $1 AND vault_path = $2`,
+    [userId, vaultPath],
+  );
+  return result.rows[0] || null;
+};
+
 // Upsert por (user_id, vault_path): el agente nunca conoce el id de la nota,
 // solo la ruta del archivo. Nunca compara version, siempre sobreescribe.
+//
+// El hash lo calcula SIEMPRE el servidor, nunca se confía en uno que venga
+// del agente. Si el contenido entrante es idéntico al guardado, el DO UPDATE
+// no toca la fila: ni sube version, ni reencola, ni mueve updated_at. Sin
+// eso, cada arranque del agente re-subiría el vault completo, porque chokidar
+// emite un evento por cada archivo que encuentra aunque nada haya cambiado.
+//
+// Devuelve { note, changed }: changed dice si la fila se escribió de verdad.
 const upsertFromAgent = async (userId, vaultPath, content) => {
   const contentHash = hashContent(content);
   const result = await pool.query(
@@ -19,10 +37,18 @@ const upsertFromAgent = async (userId, vaultPath, content) => {
        version = notes.version + 1,
        sync_status = 'pending',
        updated_at = now()
-     RETURNING id, vault_path, content, content_hash, version, sync_status, updated_at`,
+     WHERE notes.content_hash IS DISTINCT FROM EXCLUDED.content_hash
+     RETURNING ${NOTE_COLUMNS}`,
     [userId, vaultPath, content, contentHash],
   );
-  return result.rows[0];
+
+  if (result.rows[0]) {
+    return { note: result.rows[0], changed: true };
+  }
+
+  // Sin filas devueltas = el WHERE del DO UPDATE bloqueó la escritura porque
+  // el contenido no cambió. La nota existe, solo hay que leerla tal cual está.
+  return { note: await findByVaultPath(userId, vaultPath), changed: false };
 };
 
 const findAllByUser = async (userId) => {
@@ -38,7 +64,7 @@ const findAllByUser = async (userId) => {
 
 const findByIdForUser = async (id, userId) => {
   const result = await pool.query(
-    `SELECT id, vault_path, content, content_hash, version, sync_status, updated_at
+    `SELECT ${NOTE_COLUMNS}
      FROM notes
      WHERE id = $1 AND user_id = $2`,
     [id, userId],
@@ -54,7 +80,7 @@ const updateWithVersionCheck = async (id, userId, content, expectedVersion) => {
     `UPDATE notes
      SET content = $1, content_hash = $2, version = version + 1, sync_status = 'pending', updated_at = now()
      WHERE id = $3 AND user_id = $4 AND version = $5
-     RETURNING id, vault_path, content, content_hash, version, sync_status, updated_at`,
+     RETURNING ${NOTE_COLUMNS}`,
     [content, contentHash, id, userId, expectedVersion],
   );
   return result.rows[0] || null;
@@ -99,6 +125,7 @@ module.exports = {
   upsertFromAgent,
   findAllByUser,
   findByIdForUser,
+  findByVaultPath,
   updateWithVersionCheck,
   findAllPending,
   markSynced,
