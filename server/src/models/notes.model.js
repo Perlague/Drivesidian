@@ -62,10 +62,11 @@ const updateWithVersionCheck = async (id, userId, content, expectedVersion) => {
 
 // Usado por el worker de sincronización: todas las notas pendientes de
 // cualquier usuario, para agruparlas por dueño y subirlas en lotes. Trae el
-// correo del dueño porque la carpeta del repo se arma con él (ver repoPath).
+// correo del dueño porque la carpeta del repo se arma con él (ver repoPath),
+// y la version porque markSynced la compara al cerrar el lote.
 const findAllPending = async () => {
   const result = await pool.query(
-    `SELECT n.id, n.user_id, n.vault_path, n.content, u.email
+    `SELECT n.id, n.user_id, n.vault_path, n.content, n.version, u.email
      FROM notes n
      JOIN users u ON u.id = n.user_id
      WHERE n.sync_status = 'pending'
@@ -74,9 +75,24 @@ const findAllPending = async () => {
   return result.rows;
 };
 
-const markSynced = async (ids) => {
-  if (ids.length === 0) return;
-  await pool.query(`UPDATE notes SET sync_status = 'synced' WHERE id = ANY($1::bigint[])`, [ids]);
+// Cierra el lote marcando como 'synced' SOLO las notas cuya version sigue
+// siendo la que se subió. Entre que el worker leyó el lote y terminó de
+// commitear a GitHub pasan segundos, y en ese hueco el agente pudo mandar una
+// edición nueva: upsertFromAgent la dejó en 'pending' con contenido más
+// reciente. Marcar por id a secas la pisaría a 'synced' sin haberla subido
+// nunca, y ese contenido se perdería en silencio hasta la siguiente edición.
+// Las que no coinciden se quedan pendientes y entran al siguiente ciclo.
+// Devuelve cuántas quedaron efectivamente sincronizadas.
+const markSynced = async (notes) => {
+  if (notes.length === 0) return 0;
+  const result = await pool.query(
+    `UPDATE notes n
+     SET sync_status = 'synced'
+     FROM unnest($1::bigint[], $2::int[]) AS batch(id, version)
+     WHERE n.id = batch.id AND n.version = batch.version`,
+    [notes.map((note) => note.id), notes.map((note) => note.version)],
+  );
+  return result.rowCount;
 };
 
 module.exports = {

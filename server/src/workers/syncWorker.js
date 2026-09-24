@@ -43,9 +43,20 @@ const runSyncCycle = async () => {
       continue;
     }
 
-    await notesModel.markSynced(notes.map((note) => note.id));
+    // Solo se cierran las notas que no cambiaron mientras subíamos: si el
+    // agente mandó una edición a media subida, esa nota sigue pendiente y se
+    // vuelve a subir en el próximo ciclo con su contenido nuevo.
+    const syncedCount = await notesModel.markSynced(notes);
+    const reopened = notes.length - syncedCount;
+    if (reopened > 0) {
+      console.log(
+        `[syncWorker] ${reopened} nota(s) de ${folder} se editaron durante la subida y siguen pendientes.`,
+      );
+    }
+    if (syncedCount === 0) continue;
+
     try {
-      await notify(`Drivesidian: ${files.length} nota(s) sincronizada(s).`);
+      await notify(`Drivesidian: ${syncedCount} nota(s) sincronizada(s).`);
     } catch (err) {
       console.error('[syncWorker] fallo notificando a ntfy:', err.message);
     }
