@@ -52,6 +52,13 @@ const upsertFromAgent = async (userId, vaultPath, content) => {
   return { note: await findByVaultPath(userId, vaultPath), changed: false };
 };
 
+// Para la cuota de notas por usuario. Solo se llama cuando llega una ruta
+// nueva, no en cada guardado (ver el controller de sync).
+const countByUser = async (userId) => {
+  const result = await pool.query('SELECT count(*)::int AS total FROM notes WHERE user_id = $1', [userId]);
+  return result.rows[0].total;
+};
+
 const findAllByUser = async (userId) => {
   const result = await pool.query(
     `SELECT id, vault_path, version, sync_status, updated_at
@@ -144,6 +151,7 @@ const markSynced = async (notes) => {
 
 module.exports = {
   upsertFromAgent,
+  countByUser,
   findAllByUser,
   findByIdForUser,
   findByVaultPath,

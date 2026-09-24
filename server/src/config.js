@@ -28,4 +28,17 @@ module.exports = {
   // el lote todo o nada— dejaría la cola de ese usuario atascada para siempre.
   // Lo que no entra se queda pendiente para el ciclo siguiente.
   MAX_BATCH_BYTES: 20 * 1024 * 1024, // 20 MiB
+
+  // Notas totales por usuario. Un vault normal ronda las cientos; 2000 deja
+  // margen de sobra y ataja un agente en bucle o un vault clonado por error.
+  MAX_NOTES_PER_USER: 2000,
+
+  // Peticiones por hora de un mismo agent token. La clave es el jti del token
+  // y no la IP, porque un portátil cambia de red constantemente. Un vault real
+  // edita unas decenas de notas por hora, así que 300 sobra para uso legítimo
+  // y corta en seco un watcher que se quedó en bucle.
+  AGENT_RATE_LIMIT: { windowMs: 60 * 60 * 1000, max: 300 },
+
+  // Rate limit por IP del login, que es donde se verifica el código TOTP.
+  LOGIN_RATE_LIMIT: { windowMs: 60 * 1000, max: 10 },
 };

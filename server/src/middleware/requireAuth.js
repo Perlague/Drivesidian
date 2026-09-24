@@ -67,7 +67,14 @@ const requireAuth = async (req, res, next) => {
     }
   }
 
-  req.auth = { type: payload.type, userId: payload.userId, role: payload.role };
+  // jti solo lo traen los agent tokens: es la clave con la que se les aplica el
+  // rate limit, en lugar de la IP (un portátil cambia de red constantemente).
+  req.auth = {
+    type: payload.type,
+    userId: payload.userId,
+    role: payload.role,
+    jti: payload.jti || null,
+  };
   next();
 };
 

@@ -4,6 +4,8 @@ const { syncSchema } = require('../schemas/notes/sync');
 const { updateSchema } = require('../schemas/notes/update');
 const notesModel = require('../models/notes.model');
 const { success, error, validationError, conflict } = require('../utils/response');
+const { logSecurityEvent, SEVERITY, EVENTS } = require('../utils/securityLog');
+const { MAX_NOTES_PER_USER } = require('../config');
 
 // PUT /api/notes/sync — exclusivo del agente. Upsert por vault_path, nunca
 // compara version (ver "Resolución de conflictos" en el CLAUDE.md).
@@ -15,6 +17,25 @@ const sync = async (req, res) => {
   const parsed = syncSchema.safeParse(req.body);
   if (!parsed.success) {
     return validationError(res, parsed.error);
+  }
+
+  // La cuota solo aplica a rutas nuevas: editar una nota que ya existe nunca
+  // suma al total, así que el COUNT no corre en cada guardado. Esta búsqueda
+  // usa el índice único (user_id, vault_path), y se comprueba ANTES de
+  // insertar para no tener que deshacer nada después.
+  const existing = await notesModel.findByVaultPath(req.auth.userId, parsed.data.vault_path);
+  if (!existing) {
+    const total = await notesModel.countByUser(req.auth.userId);
+    if (total >= MAX_NOTES_PER_USER) {
+      logSecurityEvent({
+        type: EVENTS.QUOTA_EXCEEDED,
+        severity: SEVERITY.WARN,
+        userId: req.auth.userId,
+        req,
+        details: { quota: MAX_NOTES_PER_USER, total, vault_path: parsed.data.vault_path },
+      });
+      return error(res, `Alcanzaste el máximo de ${MAX_NOTES_PER_USER} notas.`, 403);
+    }
   }
 
   // changed = false cuando el contenido era idéntico al guardado: la nota no
