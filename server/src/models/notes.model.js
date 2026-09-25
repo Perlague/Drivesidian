@@ -60,12 +60,17 @@ const syncFromAgent = async (userId, vaultPath, content, baseVersion) => {
     return { outcome: 'unchanged', note: existente };
   }
 
-  // Un agente sin índice no sabe de qué versión partía. Sobrescribir aquí es
-  // justamente el escenario de pérdida de datos que este diseño evita: un
-  // agente reinstalado subiría su copia vieja encima de ediciones más nuevas.
-  // Tiene que reconciliar primero (ver el agente).
+  // Sin base_version el agente no sabe de qué versión partía: perdió su índice
+  // o es la primera vez que ve esta ruta. Sobrescribir sería el escenario de
+  // pérdida de datos que este diseño evita —un agente reinstalado subiendo su
+  // copia vieja encima de ediciones más nuevas—, así que se trata como
+  // conflicto y decide el humano.
+  //
+  // Antes esto devolvía un "resync_required" propio, pero era un callejón sin
+  // salida: el agente que reconcilia tampoco tiene base_version que mandar, y
+  // el servidor le pedía reconciliar a quien ya estaba reconciliando.
   if (baseVersion === null || baseVersion === undefined) {
-    return { outcome: 'resync', note: existente };
+    return { outcome: 'conflict', note: await markConflict(existente.id, userId, content, contentHash) };
   }
 
   // Compare-and-swap: el WHERE sobre version hace la comprobación atómica, así

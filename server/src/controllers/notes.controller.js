@@ -58,19 +58,6 @@ const sync = async (req, res) => {
     parsed.data.base_version ?? null,
   );
 
-  // La nota existe pero el agente no dijo de qué versión partía: perdió su
-  // índice. Sobrescribir aquí sería subir una copia vieja del disco encima de
-  // ediciones más nuevas, en silencio. Tiene que reconciliar primero.
-  if (outcome === 'resync') {
-    return conflict(
-      res,
-      null,
-      { version: note.version },
-      'resync_required',
-      'Este equipo perdió su estado de sincronización. Reconcilia antes de subir.',
-    );
-  }
-
   if (outcome === 'conflict') {
     return conflict(
       res,

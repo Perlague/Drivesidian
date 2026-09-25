@@ -7,8 +7,16 @@ const { vincular } = require('./pairing');
 const { detectarVaults, asegurarCarpetaSincronizada } = require('./vaultDetect');
 const { ColaDeSync } = require('./api');
 const { iniciarWatcher } = require('./watcher');
+const stateIndex = require('./stateIndex');
+const { reconciliar, iniciarBajada } = require('./downstream');
 
 let watcher = null;
+let pararBajada = null;
+
+const detener = () => {
+  if (watcher) watcher.close();
+  if (pararBajada) pararBajada();
+};
 
 const arrancar = async () => {
   log.info('Drivesidian — agente local');
@@ -49,25 +57,34 @@ const arrancar = async () => {
   // desde el primer momento.
   asegurarCarpetaSincronizada(vaultPath);
 
-  const cola = new ColaDeSync({
-    apiUrl,
-    agentToken,
-    onTokenInvalido: () => {
-      // Se olvida el token para que el próximo arranque vuelva a vincular, en
-      // vez de quedarse reintentando contra un acceso que ya no existe.
-      config.olvidarToken();
-      log.error('Reinicia el agente para vincular este equipo de nuevo.');
-      if (watcher) watcher.close();
-      process.exitCode = 1;
-    },
-  });
+  const onTokenInvalido = () => {
+    // Se olvida el token para que el próximo arranque vuelva a vincular, en
+    // vez de quedarse reintentando contra un acceso que ya no existe.
+    config.olvidarToken();
+    log.error('Reinicia el agente para vincular este equipo de nuevo.');
+    detener();
+    process.exitCode = 1;
+  };
 
+  const cola = new ColaDeSync({ apiUrl, agentToken, onTokenInvalido });
+  const contexto = { apiUrl, agentToken, onTokenInvalido };
+
+  // Sin índice el agente no sabe qué sincronizó, así que no puede imponer su
+  // estado en ninguna dirección: reconcilia comparando contenido antes de
+  // tocar el disco o subir nada.
+  const cursor = stateIndex.estabaPresente()
+    ? null
+    : await reconciliar(contexto, vaultPath, cola);
+
+  // El watcher va DESPUÉS de la reconciliación: si arrancara antes, vería las
+  // escrituras de esa reconciliación como cambios del usuario.
   watcher = iniciarWatcher(vaultPath, cola);
+  pararBajada = iniciarBajada(contexto, vaultPath, cursor);
 };
 
 const apagar = (senal) => {
   log.info(`Recibido ${senal}, cerrando.`);
-  if (watcher) watcher.close();
+  detener();
   process.exit(0);
 };
 

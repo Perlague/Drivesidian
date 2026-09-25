@@ -1,6 +1,7 @@
 'use strict';
 
 const log = require('./log');
+const stateIndex = require('./stateIndex');
 
 const REINTENTO_BASE_MS = 2000;
 const REINTENTO_MAX_MS = 5 * 60 * 1000;
@@ -58,6 +59,12 @@ class ColaDeSync {
   }
 
   async enviar(vaultPath, content) {
+    // La versión de la que parte esta edición, según el índice local. Es lo
+    // que permite al servidor distinguir "el agente va al día" de "cambiaron
+    // los dos lados". Si la ruta no está en el índice no se manda nada, y el
+    // servidor lo trata como conflicto en vez de sobrescribir a ciegas.
+    const conocida = stateIndex.obtener(vaultPath);
+
     let respuesta;
     try {
       respuesta = await fetch(`${this.apiUrl}/api/notes/sync`, {
@@ -66,7 +73,11 @@ class ColaDeSync {
           Authorization: `Bearer ${this.agentToken}`,
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ vault_path: vaultPath, content }),
+        body: JSON.stringify({
+          vault_path: vaultPath,
+          content,
+          ...(conocida ? { base_version: conocida.version } : {}),
+        }),
       });
     } catch (err) {
       log.warn(`Sin conexión con el servidor (${err.message}).`);
@@ -75,11 +86,27 @@ class ColaDeSync {
 
     if (respuesta.ok) {
       const cuerpo = await respuesta.json().catch(() => null);
+      const nota = cuerpo?.data;
+
+      // El índice se actualiza con lo que el servidor confirmó, no con lo que
+      // creíamos: si no, la próxima subida mandaría una base_version que el
+      // servidor ya no reconoce y se inventaría un conflicto.
+      if (nota) stateIndex.registrar(vaultPath, stateIndex.hashDe(content), nota.version);
+
       // changed = false significa que el contenido era idéntico al guardado y
       // el servidor no reencoló nada. Pasa en cada arranque del agente.
-      if (cuerpo?.data?.changed === false) log.info(`Sin cambios: ${vaultPath}`);
+      if (nota?.changed === false) log.info(`Sin cambios: ${vaultPath}`);
       else log.info(`Reportada: ${vaultPath}`);
       return 'ok';
+    }
+
+    // 409 = el servidor y el disco cambiaron los dos desde la última
+    // sincronización. El agente NO decide: corre en segundo plano sin nadie
+    // mirando. La nota queda marcada en el servidor y se resuelve desde el
+    // panel. Reintentar este mismo contenido daría 409 otra vez.
+    if (respuesta.status === 409) {
+      log.warn(`Conflicto en "${vaultPath}": resuélvelo desde el panel web.`);
+      return 'descartar';
     }
 
     const cuerpo = await respuesta.json().catch(() => null);
@@ -114,4 +141,43 @@ class ColaDeSync {
   }
 }
 
-module.exports = { ColaDeSync };
+// Bajada: qué cambió en el servidor desde el cursor. Devuelve null si no se
+// pudo consultar, para que el bucle simplemente reintente en la vuelta
+// siguiente en vez de tratarlo como un error fatal.
+//
+// El servidor no puede empujar —el agente está detrás del NAT del usuario—,
+// así que el agente pregunta. Eso tiene una ventaja: con el equipo apagado no
+// se acumula nada, porque nadie está preguntando.
+const descargarCambios = async ({ apiUrl, agentToken, cursor, onTokenInvalido }) => {
+  const query = cursor
+    ? `?since=${encodeURIComponent(cursor.since)}&since_id=${encodeURIComponent(cursor.since_id)}`
+    : '';
+
+  let respuesta;
+  try {
+    respuesta = await fetch(`${apiUrl}/api/notes/changes${query}`, {
+      headers: { Authorization: `Bearer ${agentToken}` },
+    });
+  } catch (err) {
+    log.warn(`No se pudo consultar los cambios (${err.message}).`);
+    return null;
+  }
+
+  if (respuesta.status === 401) {
+    const cuerpo = await respuesta.json().catch(() => null);
+    log.error(`El acceso de este equipo fue revocado (${cuerpo?.error?.message || 'HTTP 401'}).`);
+    onTokenInvalido();
+    return null;
+  }
+
+  if (!respuesta.ok) {
+    const cuerpo = await respuesta.json().catch(() => null);
+    log.warn(`El servidor respondió ${respuesta.status} al consultar cambios: ${cuerpo?.error?.message || ''}`);
+    return null;
+  }
+
+  const cuerpo = await respuesta.json();
+  return cuerpo.data;
+};
+
+module.exports = { ColaDeSync, descargarCambios };

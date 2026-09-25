@@ -4,6 +4,7 @@ const fs = require('fs/promises');
 const path = require('path');
 const chokidar = require('chokidar');
 const log = require('./log');
+const stateIndex = require('./stateIndex');
 const { SYNCED_FOLDER } = require('./paths');
 
 // Obsidian guarda muy seguido y en varios pasos (escribe, trunca, vuelve a
@@ -45,7 +46,18 @@ const iniciarWatcher = (vaultPath, cola) => {
       return;
     }
 
-    cola.encolar(rutaRelativa(vaultPath, archivo), contenido);
+    const ruta = rutaRelativa(vaultPath, archivo);
+
+    // Anti-bucle: cuando el agente baja una nota, apunta su hash en el índice
+    // ANTES de escribirla. Este evento es la consecuencia de esa escritura, y
+    // reportarlo devolvería al servidor lo que acaba de mandarnos.
+    //
+    // Cubre además el arranque, donde chokidar emite un `add` por cada archivo
+    // que encuentra aunque nada haya cambiado.
+    const conocida = stateIndex.obtener(ruta);
+    if (conocida && conocida.hash === stateIndex.hashDe(contenido)) return;
+
+    cola.encolar(ruta, contenido);
   };
 
   watcher.on('add', reportar);
