@@ -54,14 +54,16 @@ Tres piezas, cada una en su carpeta:
 - **Conflictos los resuelve un humano.** Si editas la misma nota desde Obsidian
   y desde la web, el servidor detecta el choque y te muestra ambas versiones en
   lugar de intentar fusionarlas: concatenar dos ediciones de prosa no produce
-  texto coherente.
+  texto coherente. El agente nunca decide por su cuenta — corre en segundo plano
+  sin nadie mirando, así que cualquier regla automática descartaría el trabajo
+  de alguien sin avisarle.
+- **El servidor no empuja, el agente pregunta.** Tu computadora está detrás de
+  un NAT, sin IP pública. Eso tiene una ventaja: si está apagada no se acumula
+  nada, porque el agente simplemente no está preguntando. Al encenderla, una
+  consulta se trae todo lo que se perdió.
 
 ## Limitaciones conocidas
 
-- **La edición desde la web no baja a tu vault local.** El flujo es en un solo
-  sentido: disco → servidor → GitHub. Si editas una nota en el panel, el
-  archivo de tu computadora sigue como estaba, y la próxima vez que lo toques en
-  Obsidian el agente lo volverá a subir pisando lo que escribiste en la web.
 - **No hay borrado de notas.** Si borras un archivo en Obsidian, el registro en
   Postgres y el archivo en GitHub se quedan.
 - **El repositorio de GitHub es compartido.** Todos los usuarios escriben en el

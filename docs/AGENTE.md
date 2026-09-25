@@ -76,13 +76,21 @@ En el panel, la lista de notas muestra cuáles están pendientes y cuáles ya
 subieron.
 
 **¿Y si edito una nota desde el panel web?**
-El cambio se guarda y se sube a GitHub, pero **el archivo de tu computadora no
-se actualiza**. Si después tocas ese archivo en Obsidian, el agente lo subirá de
-nuevo y perderás lo que escribiste en la web. Por ahora, edita en un solo lado.
+El cambio baja a tu computadora en menos de un minuto. La sincronización va en
+los dos sentidos: lo que escribes en Obsidian sube, y lo que escribes en el
+panel baja.
 
-**¿Y si edito la misma nota en los dos lados a la vez?**
-El panel te avisa y te muestra las dos versiones para que elijas con cuál
-quedarte. No las fusiona solo.
+**¿Y si edito la misma nota en los dos lados sin que se sincronice entre
+medias?**
+Nada se pierde. El agente detecta el choque, **no toca tu archivo local**, y la
+nota aparece marcada como *en conflicto* en el panel. Ahí ves las dos versiones
+y eliges con dos botones: quedarte con la del servidor o con la de tu
+computadora. No las fusiona solo, porque juntar dos versiones de un texto no
+produce algo que se entienda.
+
+**¿Y si mi computadora estuvo apagada una semana?**
+No pasa nada. El agente no acumula peticiones mientras está apagado: al
+encender, pregunta una vez y se trae todo lo que se perdió.
 
 **¿Qué pasa si borro una nota en Obsidian?**
 Se queda en el servidor y en GitHub. Borrar notas no está implementado todavía.
