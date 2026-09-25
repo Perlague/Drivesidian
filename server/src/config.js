@@ -45,4 +45,17 @@ module.exports = {
   // "Sincronizar ahora" del panel: cada pulsación habla con la API de GitHub,
   // así que se limita por usuario para que nadie la use de ariete.
   SYNC_NOW_RATE_LIMIT: { windowMs: 60 * 1000, max: 5 },
+
+  // Vida de un código de vinculación. Corto a propósito: es la ventana en la
+  // que alguien que vea el código en pantalla podría intentar algo, aunque sin
+  // el verifier del agente no pueda canjear el token.
+  PAIRING_TTL_MS: 10 * 60 * 1000,
+
+  // Pedir códigos es anónimo, así que se limita por IP para que nadie llene la
+  // tabla de códigos basura.
+  PAIRING_START_RATE_LIMIT: { windowMs: 60 * 60 * 1000, max: 20 },
+
+  // El agente hace polling cada ~2s durante los 10 minutos de vida del código:
+  // unas 300 peticiones legítimas. El tope va por código, no por IP.
+  PAIRING_STATUS_RATE_LIMIT: { windowMs: 10 * 60 * 1000, max: 400 },
 };

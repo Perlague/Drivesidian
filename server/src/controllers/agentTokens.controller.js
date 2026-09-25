@@ -6,9 +6,17 @@ const { sign } = require('../utils/jwt');
 const { success, error } = require('../utils/response');
 const { logSecurityEvent, SEVERITY, EVENTS } = require('../utils/securityLog');
 
-const AGENT_TOKEN_TTL_SECONDS = 60 * 60 * 24 * 365; // 1 año
-
 const hashJti = (jti) => crypto.createHash('sha256').update(jti).digest('hex');
+
+// Crea el agent token y su fila en agent_tokens. Se comparte entre este
+// controller y el flujo de vinculación, que también emite tokens.
+const issueAgentToken = async (userId) => {
+  const jti = crypto.randomBytes(16).toString('hex');
+  const row = await agentTokensModel.create(userId, hashJti(jti));
+  // Sin expiración: solo se caduca revocándolo (ver utils/jwt.js).
+  const token = sign({ type: 'agent', userId, jti }, process.env.JWT_SECRET);
+  return { id: row.id, token, created_at: row.created_at };
+};
 
 // POST /api/agent-tokens — exclusivo de la sesión web.
 const create = async (req, res) => {
@@ -16,26 +24,18 @@ const create = async (req, res) => {
     return error(res, 'Este endpoint es exclusivo de la sesión web.', 403);
   }
 
-  const jti = crypto.randomBytes(16).toString('hex');
-  const tokenHash = hashJti(jti);
-
-  const row = await agentTokensModel.create(req.auth.userId, tokenHash);
-  const token = sign(
-    { type: 'agent', userId: req.auth.userId, jti },
-    process.env.JWT_SECRET,
-    AGENT_TOKEN_TTL_SECONDS,
-  );
+  const issued = await issueAgentToken(req.auth.userId);
 
   logSecurityEvent({
     type: EVENTS.TOKEN_CREATED,
     userId: req.auth.userId,
     req,
-    details: { token_id: row.id },
+    details: { token_id: issued.id, source: 'panel' },
   });
 
   // El JWT completo se devuelve una sola vez: solo guardamos su hash, así
   // que no hay forma de volver a mostrarlo después de este response.
-  success(res, { id: row.id, token, created_at: row.created_at }, 201);
+  success(res, issued, 201);
 };
 
 // GET /api/agent-tokens — exclusivo de la sesión web.
@@ -70,4 +70,28 @@ const revoke = async (req, res) => {
   success(res, revoked);
 };
 
-module.exports = { create, list, revoke };
+// DELETE /api/agent-tokens/self — exclusivo del agente, que revoca SU PROPIO
+// token. Lo usa el desinstalador para no dejar una credencial viva en la base
+// después de que el usuario desinstala. No puede tocar ningún otro token: el
+// jti sale del JWT con el que viene autenticado, no del body ni de la URL.
+const revokeSelf = async (req, res) => {
+  if (req.auth.type !== 'agent') {
+    return error(res, 'Este endpoint es exclusivo del agente.', 403);
+  }
+
+  const activeToken = await agentTokensModel.findActiveByHash(hashJti(req.auth.jti));
+  if (!activeToken) {
+    return error(res, 'El token ya estaba revocado.', 404);
+  }
+
+  const revoked = await agentTokensModel.revoke(activeToken.id, req.auth.userId);
+  logSecurityEvent({
+    type: EVENTS.TOKEN_REVOKED,
+    userId: req.auth.userId,
+    req,
+    details: { token_id: activeToken.id, source: 'agente (autorrevocación)' },
+  });
+  success(res, revoked);
+};
+
+module.exports = { create, list, revoke, revokeSelf, issueAgentToken };

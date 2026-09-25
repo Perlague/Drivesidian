@@ -22,6 +22,18 @@ const findById = async (id) => {
   return result.rows[0] || null;
 };
 
+// Listado del panel de admin. Nunca devuelve password_hash ni totp_secret:
+// esas columnas no tienen por qué salir de la base ni siquiera para un admin.
+const findAll = async () => {
+  const result = await pool.query(
+    `SELECT id, email, role, notify_enabled, failed_2fa_attempts, locked_until, created_at,
+            (totp_secret IS NOT NULL) AS twofa_enabled
+     FROM users
+     ORDER BY id`,
+  );
+  return result.rows;
+};
+
 const updateNotifyPreference = async (userId, enabled) => {
   const result = await pool.query(
     `UPDATE users SET notify_enabled = $1 WHERE id = $2 RETURNING id, notify_enabled`,
@@ -79,6 +91,7 @@ module.exports = {
   findByEmail,
   findById,
   create,
+  findAll,
   updateNotifyPreference,
   saveTotpSecret,
   incrementFailedAttempts,

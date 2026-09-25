@@ -45,6 +45,11 @@ const EVENTS = {
   PAIRING_APPROVED: 'pairing.approved',
   PAIRING_CONSUMED: 'pairing.consumed',
   PAIRING_EXPIRED: 'pairing.expired',
+  // Intento de canjear un código con el verifier equivocado: alguien vio el
+  // código pero no tiene el secreto del agente. Tipo propio y no un
+  // pairing.consumed con un flag, para que el feed no diga "canjeado" cuando
+  // en realidad se rechazó.
+  PAIRING_REJECTED: 'pairing.rejected',
 };
 
 // req.ip solo es la IP real del cliente si Express confía en el proxy que

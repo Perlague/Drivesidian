@@ -8,10 +8,16 @@ const base64url = (input) => Buffer.from(input).toString('base64url');
 // Se usa tanto para la sesión web (corta duración) como para los agent tokens
 // (larga duración) — ambos comparten este mismo mecanismo, diferenciados por
 // el claim `type` en el payload.
-const sign = (payload, secret, expiresInSeconds) => {
+// expiresInSeconds es opcional: sin él el token se emite SIN claim `exp`.
+// Los agent tokens se emiten así a propósito — su única caducidad es la
+// revocación desde el panel, que es lo que hace útil la tabla agent_tokens.
+// Un token con vida fija obligaría al usuario final, que no es programador, a
+// re-vincular su equipo cada cierto tiempo sin entender por qué.
+const sign = (payload, secret, expiresInSeconds = null) => {
   const header = { alg: 'HS256', typ: 'JWT' };
   const now = Math.floor(Date.now() / 1000);
-  const fullPayload = { ...payload, iat: now, exp: now + expiresInSeconds };
+  const fullPayload = { ...payload, iat: now };
+  if (expiresInSeconds !== null) fullPayload.exp = now + expiresInSeconds;
 
   const headerPart = base64url(JSON.stringify(header));
   const payloadPart = base64url(JSON.stringify(fullPayload));

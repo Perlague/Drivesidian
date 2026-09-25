@@ -43,6 +43,8 @@ app.get('/editor', (req, res) => {
 app.use('/api/users', require('./src/routes/users.routes'));
 app.use('/api/notes', require('./src/routes/notes.routes'));
 app.use('/api/agent-tokens', require('./src/routes/agentTokens.routes'));
+app.use('/api/pairing', require('./src/routes/pairing.routes'));
+app.use('/api/admin', require('./src/routes/admin.routes'));
 
 // Ruta desconocida: responde en el mismo formato que el resto de la API en vez
 // de la página HTML por defecto de Express.
