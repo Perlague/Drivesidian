@@ -141,7 +141,6 @@ dist
 vite.config.js.timestamp-*
 vite.config.ts.timestamp-*
 .vite/
-CLAUDE.md
 
 # Banco de pruebas de ciberseguridad (local, no se versiona)
 test/

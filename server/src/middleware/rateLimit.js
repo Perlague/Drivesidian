@@ -4,8 +4,8 @@ const { error } = require('../utils/response');
 const { logSecurityEvent, SEVERITY, EVENTS } = require('../utils/securityLog');
 
 // Limitador en memoria, sin Redis: hay una sola instancia de Express en la EC2
-// (ver CLAUDE.md). No sobrevive a un reinicio del proceso ni escalaría a varias
-// instancias, y es una limitación aceptada para el tamaño del proyecto.
+// (ver docs/DESPLIEGUE.md). No sobrevive a un reinicio del proceso ni escalaría
+// a varias instancias, y es una limitación aceptada para el tamaño del proyecto.
 //
 // Dos cosas que importan más que el límite en sí:
 //

@@ -15,13 +15,16 @@ agent
 # Banco de pruebas local de ciberseguridad.
 test
 
-# Nada de esto sirve dentro de la imagen.
+# Nada de esto sirve dentro de la imagen. La documentación se lee en el repo,
+# no dentro del contenedor.
 .git
 .gitignore
 .dockerignore
+.gitattributes
 docker-compose.yml
-CLAUDE.md
-README.md
+Caddyfile
+*.md
+docs
 LICENSE
 installer
 **/*.log

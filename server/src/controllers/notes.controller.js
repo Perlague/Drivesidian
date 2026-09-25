@@ -9,7 +9,7 @@ const { runSyncForUser } = require('../workers/syncWorker');
 const { MAX_NOTES_PER_USER } = require('../config');
 
 // PUT /api/notes/sync — exclusivo del agente. Upsert por vault_path, nunca
-// compara version (ver "Resolución de conflictos" en el CLAUDE.md).
+// compara version (ver "Resolución de conflictos" en la documentación).
 const sync = async (req, res) => {
   if (req.auth.type !== 'agent') {
     return error(res, 'Este endpoint es exclusivo del agente.', 403);

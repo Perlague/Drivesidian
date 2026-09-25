@@ -9,7 +9,7 @@ FROM node:22-alpine AS deps
 
 WORKDIR /app/server
 
-# pnpm en todo el monorepo, nunca npm (ver CLAUDE.md). Corepack lo trae Node.
+# pnpm en todo el monorepo, nunca npm. Corepack lo trae Node.
 RUN corepack enable && corepack prepare pnpm@10.18.1 --activate
 
 # Solo el manifiesto y el lockfile primero: mientras no cambien, Docker reutiliza
