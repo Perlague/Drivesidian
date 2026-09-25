@@ -1,0 +1,47 @@
+/* Específico del panel de administración. Lo común vive en app.css. */
+
+/* El registro de eventos tiene seis columnas y detalles largos: con el ancho
+   normal de lectura no cabe nada. */
+main.ancho { max-width: 1200px; }
+
+.filtros {
+  display: flex;
+  gap: 1rem;
+  flex-wrap: wrap;
+  margin-bottom: 1.25rem;
+}
+
+.filtros .campo {
+  margin-bottom: 0;
+  min-width: 170px;
+}
+
+/* La tabla de eventos es densa a propósito: sirve para barrer muchas filas
+   buscando un patrón, no para leerlas una a una. */
+#tabla-eventos { font-size: 0.84rem; }
+#tabla-eventos td { padding: 0.4rem 0.5rem; }
+
+.nowrap { white-space: nowrap; }
+
+/* Los detalles pueden ser un JSON largo; se recortan para no romper el ancho
+   de la tabla, y el título completo queda al pasar el cursor. */
+.detalles {
+  max-width: 360px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--tenue);
+}
+
+.etiqueta.sev-critical { background: var(--error-fondo); color: var(--error); }
+.etiqueta.sev-warn { background: var(--aviso-fondo); color: var(--aviso); }
+.etiqueta.sev-info { background: var(--fondo); color: var(--tenue); }
+
+/* Las críticas son las que piden una reacción: se marca la fila entera para
+   poder encontrarlas de un vistazo, sin leer la columna de severidad. */
+.fila-critica td:first-child { border-left: 3px solid var(--error); }
+.fila-critica { background: color-mix(in srgb, var(--error-fondo) 45%, transparent); }
+
+@media (max-width: 900px) {
+  .detalles { max-width: 180px; }
+}

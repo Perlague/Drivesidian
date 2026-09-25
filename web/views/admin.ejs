@@ -1,0 +1,86 @@
+<%- include('partials/head', { title, extraCss: '/css/admin.css' }) %>
+<%- include('partials/nav', { current: 'admin' }) %>
+
+<main class="ancho">
+  <h1>Administración</h1>
+  <p class="subtitulo">Cuentas del servidor y registro de eventos de seguridad.</p>
+
+  <div class="aviso" id="aviso"></div>
+
+  <section class="tarjeta">
+    <h2>Eventos de seguridad</h2>
+    <p class="pista">
+      Guardian sigue este mismo registro en vivo por la salida del contenedor.
+      Aquí se consulta el histórico, que se conserva 90 días.
+    </p>
+
+    <div class="filtros">
+      <div class="campo">
+        <label for="filtro-severidad">Severidad</label>
+        <select id="filtro-severidad">
+          <option value="">Todas</option>
+          <option value="critical">Críticas</option>
+          <option value="warn">Advertencias</option>
+          <option value="info">Informativas</option>
+        </select>
+      </div>
+
+      <div class="campo">
+        <label for="filtro-tipo">Tipo</label>
+        <select id="filtro-tipo"><option value="">Todos</option></select>
+      </div>
+
+      <div class="campo">
+        <label for="filtro-desde">Desde</label>
+        <select id="filtro-desde">
+          <option value="">Siempre</option>
+          <option value="1">Última hora</option>
+          <option value="24" selected>Último día</option>
+          <option value="168">Última semana</option>
+        </select>
+      </div>
+    </div>
+
+    <table>
+      <thead>
+        <tr>
+          <th>Cuándo</th>
+          <th>Severidad</th>
+          <th>Tipo</th>
+          <th>Usuario</th>
+          <th>IP</th>
+          <th>Detalles</th>
+        </tr>
+      </thead>
+      <tbody id="tabla-eventos">
+        <tr><td colspan="6" class="cargando">Cargando…</td></tr>
+      </tbody>
+    </table>
+
+    <div class="acciones">
+      <button type="button" class="secundario" id="btn-mas" hidden>Cargar más</button>
+    </div>
+  </section>
+
+  <section class="tarjeta">
+    <h2>Cuentas</h2>
+
+    <table>
+      <thead>
+        <tr>
+          <th>#</th>
+          <th>Correo</th>
+          <th>Rol</th>
+          <th>2FA</th>
+          <th>Estado</th>
+          <th>Alta</th>
+        </tr>
+      </thead>
+      <tbody id="tabla-usuarios">
+        <tr><td colspan="6" class="cargando">Cargando…</td></tr>
+      </tbody>
+    </table>
+  </section>
+</main>
+
+<%- include('partials/foot', { pageScript: '/js/admin.js' }) %>

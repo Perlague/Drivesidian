@@ -2,6 +2,7 @@
 
 const express = require('express');
 const requireAuthPage = require('../middleware/requireAuthPage');
+const requireRolePage = require('../middleware/requireRolePage');
 const { safeNext } = require('../middleware/requireAuthPage');
 const { readPayload } = require('../utils/session');
 
@@ -42,6 +43,10 @@ router.get('/dashboard', requireAuthPage, (req, res) => {
 
 router.get('/notes', requireAuthPage, (req, res) => {
   res.render('notes', { title: 'Mis notas' });
+});
+
+router.get('/admin', requireAuthPage, requireRolePage('admin'), (req, res) => {
+  res.render('admin', { title: 'Administración' });
 });
 
 router.get('/notes/:id', requireAuthPage, (req, res) => {

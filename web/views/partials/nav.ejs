@@ -3,6 +3,9 @@
   <nav>
     <a href="/notes" class="<%= current === 'notes' ? 'activo' : '' %>">Notas</a>
     <a href="/dashboard" class="<%= current === 'dashboard' ? 'activo' : '' %>">Configuración</a>
+    <% if (typeof currentUser !== 'undefined' && currentUser && currentUser.role === 'admin') { %>
+      <a href="/admin" class="<%= current === 'admin' ? 'activo' : '' %>">Admin</a>
+    <% } %>
     <button type="button" id="btn-logout" class="enlace">Salir</button>
   </nav>
 </header>
