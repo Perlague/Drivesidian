@@ -3,7 +3,8 @@
 const express = require('express');
 const requireAuth = require('../middleware/requireAuth');
 const rateLimit = require('../middleware/rateLimit');
-const { AGENT_RATE_LIMIT, SYNC_NOW_RATE_LIMIT } = require('../config');
+const requireScope = require('../middleware/requireScope');
+const { AGENT_RATE_LIMIT, SYNC_NOW_RATE_LIMIT, AGENT_SCOPES } = require('../config');
 const { sync, syncNow, list, getOne, update } = require('../controllers/notes.controller');
 
 const router = express.Router();
@@ -22,7 +23,7 @@ const syncNowRateLimit = rateLimit({
   keyBy: (req) => (req.auth?.type === 'user' ? `user:${req.auth.userId}` : null),
 });
 
-router.put('/sync', agentRateLimit, sync);
+router.put('/sync', agentRateLimit, requireScope(AGENT_SCOPES.WRITE), sync);
 router.post('/sync-now', syncNowRateLimit, syncNow);
 router.get('/', list);
 router.get('/:id', getOne);

@@ -54,7 +54,7 @@ const pintarTokens = (tokens) => {
   tabla.innerHTML = '';
 
   if (tokens.length === 0) {
-    tabla.innerHTML = '<tr><td colspan="4" class="vacio">Todavía no hay ningún equipo vinculado.</td></tr>';
+    tabla.innerHTML = '<tr><td colspan="5" class="vacio">Todavía no hay ningún equipo vinculado.</td></tr>';
     return;
   }
 
@@ -68,6 +68,12 @@ const pintarTokens = (tokens) => {
 
     const creado = document.createElement('td');
     creado.textContent = fechaLegible(token.created_at);
+
+    // Un token activo mientras tu equipo está apagado se nota aquí, y es la
+    // señal para revocarlo.
+    const ultimoUso = document.createElement('td');
+    ultimoUso.textContent = token.last_used_at ? fechaLegible(token.last_used_at) : 'nunca';
+    if (!token.last_used_at) ultimoUso.className = 'mono';
 
     const estado = document.createElement('td');
     estado.innerHTML = revocado
@@ -83,7 +89,7 @@ const pintarTokens = (tokens) => {
       acciones.appendChild(boton);
     }
 
-    fila.append(id, creado, estado, acciones);
+    fila.append(id, creado, ultimoUso, estado, acciones);
     tabla.appendChild(fila);
   }
 };
@@ -91,7 +97,7 @@ const pintarTokens = (tokens) => {
 const cargarTokens = async () => {
   const res = await API.get('/agent-tokens');
   if (!res.ok) {
-    tabla.innerHTML = `<tr><td colspan="4" class="vacio">${res.message}</td></tr>`;
+    tabla.innerHTML = `<tr><td colspan="5" class="vacio">${res.message}</td></tr>`;
     return;
   }
   pintarTokens(res.data);

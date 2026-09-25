@@ -33,6 +33,21 @@ module.exports = {
   // margen de sobra y ataja un agente en bucle o un vault clonado por error.
   MAX_NOTES_PER_USER: 2000,
 
+  // Alcances de un agent token. Hoy el agente pide los dos, pero declararlos
+  // permite que mañana un consumidor que solo lea —un visor en el celular, un
+  // script de respaldo— pida uno con lectura nada más, sin inventar otra tabla
+  // ni otro flujo de vinculación.
+  AGENT_SCOPES: {
+    READ: 'notes:read',
+    WRITE: 'notes:write',
+  },
+
+  // Cada cuánto se refresca `agent_tokens.last_used_at`. requireAuth ya
+  // consulta esa tabla en cada request del agente; sin este umbral cada
+  // petición sumaría además una escritura. Configurable como el resto de los
+  // intervalos, sobre todo para poder probarlo sin esperar cinco minutos.
+  LAST_USED_REFRESH_MS: Number(process.env.LAST_USED_REFRESH_MS) || 5 * 60 * 1000,
+
   // Peticiones por hora de un mismo agent token. La clave es el jti del token
   // y no la IP, porque un portátil cambia de red constantemente. Un vault real
   // edita unas decenas de notas por hora, así que 300 sobra para uso legítimo

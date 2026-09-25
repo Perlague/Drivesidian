@@ -5,6 +5,7 @@ const agentTokensModel = require('../models/agentTokens.model');
 const { sign } = require('../utils/jwt');
 const { success, error } = require('../utils/response');
 const { logSecurityEvent, SEVERITY, EVENTS } = require('../utils/securityLog');
+const { AGENT_SCOPES } = require('../config');
 
 const hashJti = (jti) => crypto.createHash('sha256').update(jti).digest('hex');
 
@@ -13,8 +14,20 @@ const hashJti = (jti) => crypto.createHash('sha256').update(jti).digest('hex');
 const issueAgentToken = async (userId) => {
   const jti = crypto.randomBytes(16).toString('hex');
   const row = await agentTokensModel.create(userId, hashJti(jti));
+  // El agente necesita los dos alcances: sube notas y baja cambios. El claim se
+  // declara igual, para que un consumidor futuro que solo lea pueda pedir uno
+  // más estrecho sin cambiar nada del mecanismo.
+  //
   // Sin expiración: solo se caduca revocándolo (ver utils/jwt.js).
-  const token = sign({ type: 'agent', userId, jti }, process.env.JWT_SECRET);
+  const token = sign(
+    {
+      type: 'agent',
+      userId,
+      jti,
+      scope: [AGENT_SCOPES.READ, AGENT_SCOPES.WRITE],
+    },
+    process.env.JWT_SECRET,
+  );
   return { id: row.id, token, created_at: row.created_at };
 };
 
