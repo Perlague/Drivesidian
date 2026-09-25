@@ -1,0 +1,120 @@
+# Despliegue completo: git clone + llenar .env + docker compose up -d
+#
+# Los límites de memoria están dimensionados para la t3.small de 2 GB, que
+# además comparte máquina con OpenClaw/Guardian. Son un punto de partida:
+# ajústalos con `docker stats` y `free -h` sobre la instancia real.
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: drivesidian
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?falta POSTGRES_PASSWORD en el .env}
+      POSTGRES_DB: drivesidian
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    # Los valores por defecto de Postgres asumen tener la máquina para él solo.
+    # Cada conexión es un proceso aparte, así que max_connections pesa tanto
+    # como shared_buffers. El pool de `pg` usa 8, más una para las migraciones.
+    command: >
+      postgres
+      -c shared_buffers=128MB
+      -c effective_cache_size=384MB
+      -c work_mem=4MB
+      -c maintenance_work_mem=64MB
+      -c max_connections=20
+    healthcheck:
+      # El server espera a que esto pase antes de intentar migrar.
+      test: ["CMD-SHELL", "pg_isready -U drivesidian -d drivesidian"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+      start_period: 10s
+    mem_limit: 512m
+    # NO se publica el puerto 5432: Postgres solo es accesible desde la red
+    # interna de compose, igual que dice el Security Group de la EC2.
+    networks: [interna]
+
+  server:
+    build:
+      # La raíz del monorepo, porque la imagen necesita server/ y web/.
+      context: .
+      dockerfile: server/Dockerfile
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      NODE_ENV: production
+      PORT: 3000
+      DATABASE_URL: postgres://drivesidian:${POSTGRES_PASSWORD}@postgres:5432/drivesidian
+
+      # Caddy va delante, así que req.ip solo es la IP real del cliente si
+      # Express confía en un salto de proxy. Sin esto, TODOS los eventos de
+      # seguridad llegarían con la IP del contenedor de Caddy.
+      TRUST_PROXY: 1
+      # Las URLs de vinculación que abre el agente tienen que apuntar al dominio
+      # público, no a lo que vea Express por dentro.
+      PUBLIC_URL: https://${DOMAIN:?falta DOMAIN en el .env}
+
+      JWT_SECRET: ${JWT_SECRET:?falta JWT_SECRET en el .env}
+      TOTP_ENCRYPTION_KEY: ${TOTP_ENCRYPTION_KEY:?falta TOTP_ENCRYPTION_KEY en el .env}
+      NTFY_SECRET: ${NTFY_SECRET:?falta NTFY_SECRET en el .env}
+
+      GITHUB_TOKEN: ${GITHUB_TOKEN:?falta GITHUB_TOKEN en el .env}
+      GITHUB_OWNER: ${GITHUB_OWNER:?falta GITHUB_OWNER en el .env}
+      GITHUB_REPO: ${GITHUB_REPO:?falta GITHUB_REPO en el .env}
+      GITHUB_BRANCH: ${GITHUB_BRANCH:-main}
+
+      SYNC_INTERVAL_MS: ${SYNC_INTERVAL_MS:-300000}
+      SECURITY_EVENT_RETENTION_DAYS: ${SECURITY_EVENT_RETENTION_DAYS:-90}
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:3000/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 20s
+    mem_limit: 384m
+    # El feed de seguridad sale por stdout, así que Guardian lo sigue con
+    # `docker compose logs -f server | grep drivesidian.security`. La rotación
+    # evita que llene el disco de la instancia.
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "5"
+    networks: [interna]
+
+  caddy:
+    image: caddy:2-alpine
+    restart: unless-stopped
+    depends_on: [server]
+    ports:
+      # 80 lo necesita Let's Encrypt para validar el dominio y renovar solo.
+      - "80:80"
+      - "443:443"
+    environment:
+      DOMAIN: ${DOMAIN}
+      ACME_EMAIL: ${ACME_EMAIL:?falta ACME_EMAIL en el .env}
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      # Sin estos volúmenes, Caddy pediría un certificado nuevo en cada
+      # reinicio y chocaría con los límites de Let's Encrypt.
+      - caddy-data:/data
+      - caddy-config:/config
+    mem_limit: 128m
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+    networks: [interna]
+
+volumes:
+  postgres-data:
+  caddy-data:
+  caddy-config:
+
+networks:
+  interna:

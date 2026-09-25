@@ -1,0 +1,10 @@
+# Normalización de finales de línea.
+* text=auto
+
+# Estos archivos los ejecuta Linux dentro del contenedor. Si git los entrega con
+# CRLF al clonar en Windows, el shebang deja de funcionar y el contenedor muere
+# con un "no such file or directory" que no dice nada del problema real.
+*.sh text eol=lf
+Dockerfile text eol=lf
+docker-compose.yml text eol=lf
+Caddyfile text eol=lf

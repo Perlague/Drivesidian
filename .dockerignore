@@ -1,0 +1,28 @@
+# Las dependencias se instalan dentro de la imagen, con el lockfile. Copiar las
+# del host además de ser lento puede meter binarios compilados para Windows.
+node_modules
+**/node_modules
+
+# NUNCA meter secretos reales en la imagen. Las variables las inyecta
+# docker compose desde el .env de la raíz.
+.env
+**/.env
+!**/.env.example
+
+# El agente corre en la máquina del usuario, no en el servidor.
+agent
+
+# Banco de pruebas local de ciberseguridad.
+test
+
+# Nada de esto sirve dentro de la imagen.
+.git
+.gitignore
+.dockerignore
+docker-compose.yml
+CLAUDE.md
+README.md
+LICENSE
+installer
+**/*.log
+**/logs

@@ -1,0 +1,45 @@
+# Caddy en vez de Nginx + Certbot: saca y renueva el certificado de Let's
+# Encrypt solo, sin cron ni configuración aparte.
+#
+# En local, poner DOMAIN=localhost en el .env: Caddy usa su CA interna y sirve
+# por HTTPS sin pedirle nada a Let's Encrypt.
+
+{
+	email {$ACME_EMAIL}
+}
+
+{$DOMAIN} {
+	encode gzip
+
+	# Coherente con el límite del servidor (MAX_REQUEST_BODY, 1200 kb): esta es
+	# la red exterior, así que corta más arriba y deja que Express dé el mensaje
+	# preciso para lo que sí pasa de aquí.
+	request_body {
+		max_size 2MB
+	}
+
+	header {
+		# El contenido de una nota es texto que el usuario controla por
+		# completo. El editor ya lo sanitiza con DOMPurify; esto es la segunda
+		# línea de defensa.
+		X-Content-Type-Options nosniff
+		X-Frame-Options DENY
+		Referrer-Policy strict-origin-when-cross-origin
+		# HSTS: 1 año. Ojo, esto compromete al dominio a servir HTTPS.
+		Strict-Transport-Security "max-age=31536000; includeSubDomains"
+		-Server
+	}
+
+	reverse_proxy server:3000 {
+		# Caddy ya manda X-Forwarded-For y X-Forwarded-Proto; Express los lee
+		# gracias a TRUST_PROXY=1. De eso dependen los eventos de seguridad y
+		# el rate limiting para ver la IP real y no la del contenedor.
+		health_uri /health
+		health_interval 30s
+	}
+
+	log {
+		output stdout
+		format console
+	}
+}
