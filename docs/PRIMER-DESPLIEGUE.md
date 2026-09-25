@@ -5,6 +5,24 @@ allá. El porqué de cada cosa está en [DESPLIEGUE.md](DESPLIEGUE.md).
 
 Ten a mano un bloc de notas para pegar 6 valores que vas a ir recogiendo.
 
+## Dónde acaba cada valor
+
+Nada de esto se edita en tu Windows. **Los archivos que cambias están en la EC2**,
+dentro de la carpeta `Drivesidian` que clonas en la Parte 7.
+
+| Valor que recoges | Archivo | Se edita en |
+|---|---|---|
+| `GITHUB_OWNER` | `.env` (raíz del proyecto) | Parte 8 |
+| `GITHUB_REPO` | `.env` | Parte 8 |
+| `GITHUB_TOKEN` | `.env` | Parte 8 |
+| `NGROK_AUTHTOKEN` | `.env` | Parte 8 |
+| `DOMINIO_NGROK` | **`ngrok.yml`** (otro archivo) | Parte 9 |
+| `URL_PANEL` | ningún archivo, va como argumento | Parte 12 |
+
+Las otras cuatro variables del `.env` (`POSTGRES_PASSWORD`, `JWT_SECRET`,
+`TOTP_ENCRYPTION_KEY`, `NTFY_SECRET`) las rellena el script de la Parte 8. No las
+toques.
+
 ---
 
 ## Parte 0 — En tu Windows, antes de nada
@@ -30,6 +48,15 @@ git push origin develop
    - `GITHUB_OWNER` = tu usuario de GitHub (`Perlague`)
    - `GITHUB_REPO` = `drivesidian-notas`
 
+**Dónde se usan:** las dos van al archivo `.env` de la raíz del proyecto, ya en la
+EC2, en la **Parte 8**. Líneas `GITHUB_OWNER=` y `GITHUB_REPO=`.
+
+> Este repositorio **no es** el del código. Aquí es donde el servidor sube las
+> notas de los usuarios. No apuntes estas dos variables a `Perlague/Drivesidian`:
+> ese repo es público y las notas quedarían a la vista de cualquiera.
+>
+> Si ya tienes otro repositorio **privado y vacío**, úsalo y sáltate esta parte.
+
 ---
 
 ## Parte 2 — GitHub: token de acceso
@@ -44,6 +71,10 @@ git push origin develop
 7. Aparece una línea verde que empieza con `ghp_`. Botón de copiar (📋)
 8. **Apunta en tu bloc:** `GITHUB_TOKEN` = eso que copiaste
 
+**Dónde se usa:** archivo `.env` de la raíz, en la **Parte 8**, línea
+`GITHUB_TOKEN=`. También te lo va a pedir el `git clone` de la Parte 7, como
+contraseña.
+
 > Si sales de esa página sin copiarlo, no se puede volver a ver. Tendrías que
 > generar otro.
 
@@ -56,6 +87,9 @@ git push origin develop
 2. Botón **Copy** junto al token
 3. **Apunta en tu bloc:** `NGROK_AUTHTOKEN` = eso
 
+**Dónde se usa:** archivo `.env` de la raíz, en la **Parte 8**, línea
+`NGROK_AUTHTOKEN=`.
+
 ---
 
 ## Parte 4 — ngrok: dominio fijo
@@ -66,6 +100,9 @@ git push origin develop
 4. Botón **Create**
 5. **Apunta en tu bloc:** `DOMINIO_NGROK` = lo que quedó, algo como
    `algo-algo-algo.ngrok-free.app` (sin `https://`)
+
+**Dónde se usa:** este NO va en el `.env`. Va en el archivo **`ngrok.yml`** de la
+raíz del proyecto, en la **Parte 9**.
 
 ---
 
@@ -247,6 +284,10 @@ Al final del texto sale tu enlace:
 ```
 
 **Apunta en tu bloc:** `URL_PANEL` = ese enlace.
+
+**Dónde se usa:** en ningún archivo. Lo escribes como argumento del comando de la
+**Parte 12**, al construir el instalador. El servidor lo detecta solo, no hay que
+configurárselo.
 
 ---
 
