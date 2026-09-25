@@ -1,65 +1,125 @@
-* {
-  box-sizing: border-box;
+/* Específico del editor. Lo común vive en app.css. */
+
+.editor-main {
+  max-width: 1200px;
 }
 
-body {
-  margin: 0;
-  font-family: system-ui, sans-serif;
-  background: #1e1e1e;
-  color: #e0e0e0;
+.editor-cabecera {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+  flex-wrap: wrap;
+  margin-bottom: 0.5rem;
 }
 
-header {
-  padding: 1rem;
-  border-bottom: 1px solid #333;
-}
-
-header h1 {
-  margin: 0;
-  font-size: 1.1rem;
-  font-weight: 500;
+.editor-cabecera h1 {
+  font-size: 1.05rem;
+  word-break: break-all;
 }
 
 .editor-layout {
-  display: flex;
-  height: calc(100vh - 57px);
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+  min-height: 65vh;
+}
+
+#markdown-input,
+.preview {
+  border: 1px solid var(--borde);
+  border-radius: var(--radio);
+  background: var(--superficie);
+  padding: 1rem;
+  overflow-y: auto;
+  max-height: 72vh;
 }
 
 #markdown-input {
-  flex: 1;
-  padding: 1rem;
-  border: none;
-  border-right: 1px solid #333;
-  background: #252525;
-  color: #e0e0e0;
-  font-family: 'Courier New', monospace;
-  font-size: 0.95rem;
-  resize: none;
-  outline: none;
+  font-family: ui-monospace, "Cascadia Code", Consolas, monospace;
+  font-size: 0.9rem;
+  line-height: 1.65;
+  color: var(--texto);
+  resize: vertical;
+}
+
+#markdown-input:disabled {
+  opacity: 0.6;
 }
 
 .preview {
-  flex: 1;
-  padding: 1rem;
-  overflow-y: auto;
+  font-size: 0.95rem;
 }
 
-.preview h1,
-.preview h2,
-.preview h3 {
-  border-bottom: 1px solid #333;
-  padding-bottom: 0.3rem;
+.preview > :first-child { margin-top: 0; }
+.preview h1 { font-size: 1.5rem; }
+.preview h2 { font-size: 1.2rem; }
+.preview h3 { font-size: 1.05rem; }
+
+.preview pre {
+  background: var(--fondo);
+  border: 1px solid var(--borde);
+  border-radius: 6px;
+  padding: 0.75rem;
+  overflow-x: auto;
+  font-size: 0.85rem;
 }
 
 .preview code {
-  background: #2d2d2d;
-  padding: 0.1rem 0.3rem;
-  border-radius: 3px;
+  font-family: ui-monospace, "Cascadia Code", Consolas, monospace;
+  font-size: 0.87em;
 }
 
-.preview pre {
-  background: #2d2d2d;
+.preview blockquote {
+  margin: 0.8rem 0;
+  padding-left: 0.9rem;
+  border-left: 3px solid var(--borde);
+  color: var(--tenue);
+}
+
+.preview table { margin: 0.8rem 0; }
+.preview img { max-width: 100%; }
+
+/* Estado degradado: DOMPurify no cargó y la vista previa está apagada a
+   propósito, en vez de insertar HTML sin limpiar. */
+.preview-degradado {
+  color: var(--aviso);
+  background: var(--aviso-fondo);
+  font-size: 0.88rem;
+}
+
+/* ---------- Comparación de versiones en conflicto ---------- */
+.comparacion {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+  margin-top: 1.25rem;
+}
+
+.comparacion h3 {
+  font-size: 0.87rem;
+  color: var(--tenue);
+  margin: 0 0 0.4rem;
+}
+
+.comparacion pre {
+  background: var(--fondo);
+  border: 1px solid var(--borde);
+  border-radius: 6px;
   padding: 0.75rem;
-  overflow-x: auto;
-  border-radius: 4px;
+  max-height: 45vh;
+  overflow: auto;
+  font-size: 0.82rem;
+  white-space: pre-wrap;
+  word-break: break-word;
+  margin: 0;
+}
+
+@media (max-width: 860px) {
+  .editor-layout,
+  .comparacion {
+    grid-template-columns: 1fr;
+  }
+
+  #markdown-input, .preview { max-height: 45vh; }
 }

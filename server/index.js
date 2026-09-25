@@ -35,21 +35,26 @@ app.get('/health', (req, res) => {
   success(res, { status: 'ok' });
 });
 
-// Borrador del editor, todavía sin requireAuth ni datos reales de notes.
-app.get('/editor', (req, res) => {
-  res.render('editor');
-});
-
 app.use('/api/users', require('./src/routes/users.routes'));
 app.use('/api/notes', require('./src/routes/notes.routes'));
 app.use('/api/agent-tokens', require('./src/routes/agentTokens.routes'));
 app.use('/api/pairing', require('./src/routes/pairing.routes'));
 app.use('/api/admin', require('./src/routes/admin.routes'));
 
-// Ruta desconocida: responde en el mismo formato que el resto de la API en vez
-// de la página HTML por defecto de Express.
+// Las páginas del panel van al final, para que nada bajo /api caiga aquí.
+app.use('/', require('./src/routes/pages.routes'));
+
+// Ruta desconocida. Las peticiones a la API reciben JSON; un navegador que
+// pidió HTML recibe una página, no un objeto suelto en pantalla.
 app.use((req, res) => {
-  error(res, `No existe ${req.method} ${req.originalUrl}.`, 404);
+  if (req.originalUrl.startsWith('/api/') || !req.accepts('html')) {
+    return error(res, `No existe ${req.method} ${req.originalUrl}.`, 404);
+  }
+  return res.status(404).render('error', {
+    title: 'Página no encontrada',
+    codigo: 404,
+    mensaje: 'Esa página no existe.',
+  });
 });
 
 // Manejador central de errores. Va al final, con los cuatro parámetros que

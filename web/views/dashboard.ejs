@@ -1,0 +1,85 @@
+<%- include('partials/head', { title }) %>
+<%- include('partials/nav', { current: 'dashboard' }) %>
+
+<main>
+  <h1>Configuración</h1>
+  <p class="subtitulo" id="correo"></p>
+
+  <div class="aviso" id="aviso"></div>
+
+  <section class="tarjeta">
+    <h2>Equipos vinculados</h2>
+    <p class="pista">
+      Cada equipo con el agente instalado usa un acceso propio. Al desinstalarlo
+      se revoca solo; aquí puedes revocarlo a mano si perdiste el equipo.
+    </p>
+
+    <div id="token-nuevo" hidden>
+      <p class="aviso atencion">
+        Guarda este acceso ahora: no se puede volver a mostrar.
+      </p>
+      <div class="secreto">
+        <code id="token-valor"></code>
+        <button type="button" class="secundario" id="btn-copiar-token">Copiar</button>
+      </div>
+    </div>
+
+    <table>
+      <thead>
+        <tr><th>#</th><th>Creado</th><th>Estado</th><th></th></tr>
+      </thead>
+      <tbody id="tabla-tokens">
+        <tr><td colspan="4" class="cargando">Cargando…</td></tr>
+      </tbody>
+    </table>
+
+    <div class="acciones">
+      <button type="button" class="secundario" id="btn-crear-token">Generar acceso manual</button>
+    </div>
+    <p class="pista">
+      Normalmente no necesitas esto: el instalador del agente abre el navegador
+      y vincula el equipo solo.
+    </p>
+  </section>
+
+  <section class="tarjeta">
+    <h2>Notificaciones</h2>
+
+    <div class="interruptor">
+      <label for="notificaciones">Avisarme cuando un lote termine de sincronizarse</label>
+      <input type="checkbox" id="notificaciones" />
+    </div>
+
+    <p class="pista" style="margin-top: 1rem;">
+      Para recibirlas en el celular, instala la app de
+      <a href="https://ntfy.sh" target="_blank" rel="noopener noreferrer">ntfy</a>
+      y suscríbete a este canal escaneando el código:
+    </p>
+
+    <img class="qr" id="qr-ntfy" alt="Código QR para suscribirte a tus notificaciones" hidden />
+
+    <div class="secreto">
+      <code id="ntfy-url"></code>
+      <button type="button" class="secundario" id="btn-copiar-ntfy">Copiar</button>
+    </div>
+
+    <p class="pista">
+      Este canal es tuyo y no se puede adivinar, pero quien lo conozca puede leer
+      tus avisos. No lo compartas.
+    </p>
+  </section>
+
+  <section class="tarjeta">
+    <h2>Sincronización</h2>
+    <p class="pista">
+      El servidor sube tus notas pendientes cada pocos minutos. Si tienes prisa,
+      puedes forzarlo.
+    </p>
+    <div class="acciones">
+      <button type="button" id="btn-sync">Sincronizar ahora</button>
+    </div>
+    <p class="pista" id="resultado-sync"></p>
+  </section>
+</main>
+
+<%- include('partials/foot', { pageScript: '/js/dashboard.js' }) %>

@@ -1,20 +1,57 @@
-<!DOCTYPE html>
-<html lang="es">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Drivesidian — Editor</title>
-  <link rel="stylesheet" href="/css/editor.css" />
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/marked/12.0.2/marked.min.js"></script>
-</head>
-<body>
-  <header>
-    <h1>Drivesidian — Editor de notas (borrador, sin conectar al backend)</h1>
-  </header>
-  <main class="editor-layout">
-    <textarea id="markdown-input" placeholder="Escribe tu nota en markdown..."></textarea>
+<%- include('partials/head', { title, extraCss: '/css/editor.css' }) %>
+<%- include('partials/nav', { current: 'notes' }) %>
+
+<main class="editor-main">
+  <div class="editor-cabecera">
+    <div>
+      <h1 id="ruta" class="mono">Cargando…</h1>
+      <p class="subtitulo" id="meta"></p>
+    </div>
+    <div class="acciones" style="margin: 0;">
+      <button type="button" id="btn-guardar" disabled>Guardar</button>
+      <a href="/notes"><button type="button" class="secundario">Volver</button></a>
+    </div>
+  </div>
+
+  <div class="aviso" id="aviso"></div>
+
+  <div class="editor-layout">
+    <textarea id="markdown-input" spellcheck="false"
+              placeholder="Escribe tu nota en markdown…" disabled></textarea>
     <div id="preview" class="preview"></div>
-  </main>
-  <script src="/js/editor.js"></script>
-</body>
-</html>
+  </div>
+</main>
+
+<!-- Diálogo de conflicto: aparece cuando el agente subió una versión más nueva
+     mientras la nota estaba abierta aquí. -->
+<dialog id="dialogo-conflicto">
+  <h2>Esta nota cambió mientras la editabas</h2>
+  <p class="pista">
+    El agente subió una versión más nueva desde tu equipo. Elige con cuál
+    quedarte; no se fusionan solas porque juntar dos ediciones de prosa no
+    produce un texto coherente.
+  </p>
+
+  <div class="comparacion" id="comparacion" hidden>
+    <div>
+      <h3>La tuya (en esta pestaña)</h3>
+      <pre class="mono" id="version-mia"></pre>
+    </div>
+    <div>
+      <h3>La del servidor</h3>
+      <pre class="mono" id="version-servidor"></pre>
+    </div>
+  </div>
+
+  <div class="acciones">
+    <button type="button" id="btn-quedarme-mia">Mantener la mía</button>
+    <button type="button" class="secundario" id="btn-quedarme-servidor">Mantener la del servidor</button>
+    <button type="button" class="secundario" id="btn-ver-ambas">Ver ambas</button>
+    <button type="button" class="enlace" id="btn-cerrar-conflicto">Cancelar</button>
+  </div>
+</dialog>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/marked/12.0.2/marked.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/dompurify/3.1.6/purify.min.js"></script>
+<script>window.NOTE_ID = <%- JSON.stringify(noteId) %>;</script>
+<%- include('partials/foot', { pageScript: '/js/editor.js' }) %>

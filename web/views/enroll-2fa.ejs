@@ -1,0 +1,40 @@
+<%- include('partials/head', { title }) %>
+<%- include('partials/nav', { current: '' }) %>
+
+<main class="angosto">
+  <h1>Autenticación en dos pasos</h1>
+  <p class="subtitulo">
+    Escanea el código con Google Authenticator, Authy o la app que uses, y
+    confirma con el primer código de seis dígitos.
+  </p>
+
+  <div class="tarjeta">
+    <div class="aviso" id="aviso"></div>
+    <p class="cargando" id="cargando">Generando tu código…</p>
+
+    <div id="enrolamiento" hidden>
+      <img class="qr" id="qr" alt="Código QR para tu app de autenticación" />
+
+      <details>
+        <summary class="pista">¿No puedes escanear el código?</summary>
+        <p class="pista">Escribe esta clave a mano en tu app:</p>
+        <div class="secreto">
+          <code id="secreto"></code>
+          <button type="button" class="secundario" id="btn-copiar">Copiar</button>
+        </div>
+      </details>
+
+      <form id="form-confirmar" style="margin-top: 1.25rem;">
+        <div class="campo">
+          <label for="codigo">Código de seis dígitos</label>
+          <input type="text" id="codigo" inputmode="numeric" autocomplete="one-time-code"
+                 pattern="[0-9]{6}" maxlength="6" placeholder="000000" required />
+        </div>
+        <button type="submit" class="ancho" id="btn-confirmar">Activar</button>
+      </form>
+    </div>
+  </div>
+</main>
+
+<script>window.SIGUIENTE = <%- JSON.stringify(next || '') %>;</script>
+<%- include('partials/foot', { pageScript: '/js/enroll-2fa.js' }) %>

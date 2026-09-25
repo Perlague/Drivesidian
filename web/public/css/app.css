@@ -1,0 +1,271 @@
+/* Estilos comunes del panel. Sin framework ni build step, a tono con el resto
+   del proyecto: CSS plano servido tal cual por el mismo Express. */
+
+:root {
+  --fondo: #f6f7f9;
+  --superficie: #ffffff;
+  --borde: #dfe3e8;
+  --texto: #1d2127;
+  --tenue: #6b7280;
+  --acento: #4c6ef5;
+  --acento-texto: #ffffff;
+  --exito: #157347;
+  --exito-fondo: #e7f5ec;
+  --error: #b42318;
+  --error-fondo: #fdecea;
+  --aviso: #8a6100;
+  --aviso-fondo: #fff6e0;
+  --radio: 8px;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --fondo: #14161a;
+    --superficie: #1c1f24;
+    --borde: #2e333b;
+    --texto: #e6e8eb;
+    --tenue: #9aa1ac;
+    --acento: #7c93ff;
+    --acento-texto: #10131a;
+    --exito: #6ee7a8;
+    --exito-fondo: #17301f;
+    --error: #ff9b91;
+    --error-fondo: #331a18;
+    --aviso: #f5cd6b;
+    --aviso-fondo: #33290f;
+  }
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  background: var(--fondo);
+  color: var(--texto);
+  line-height: 1.5;
+}
+
+/* ---------- Barra superior ---------- */
+.topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.75rem 1.25rem;
+  background: var(--superficie);
+  border-bottom: 1px solid var(--borde);
+}
+
+.brand {
+  font-weight: 650;
+  font-size: 1.05rem;
+  color: var(--texto);
+  text-decoration: none;
+}
+
+.topbar nav {
+  display: flex;
+  align-items: center;
+  gap: 1.1rem;
+}
+
+.topbar nav a {
+  color: var(--tenue);
+  text-decoration: none;
+  font-size: 0.93rem;
+}
+
+.topbar nav a:hover { color: var(--texto); }
+.topbar nav a.activo { color: var(--acento); font-weight: 550; }
+
+/* ---------- Estructura ---------- */
+main {
+  max-width: 900px;
+  margin: 0 auto;
+  padding: 1.75rem 1.25rem 4rem;
+}
+
+main.angosto { max-width: 420px; }
+
+h1 { font-size: 1.4rem; margin: 0 0 0.35rem; }
+h2 { font-size: 1.05rem; margin: 0 0 0.75rem; }
+.subtitulo { color: var(--tenue); margin: 0 0 1.5rem; font-size: 0.93rem; }
+
+.tarjeta {
+  background: var(--superficie);
+  border: 1px solid var(--borde);
+  border-radius: var(--radio);
+  padding: 1.25rem;
+  margin-bottom: 1.25rem;
+}
+
+/* ---------- Formularios ---------- */
+label {
+  display: block;
+  font-size: 0.87rem;
+  font-weight: 550;
+  margin-bottom: 0.3rem;
+}
+
+input[type="text"],
+input[type="email"],
+input[type="password"],
+select {
+  width: 100%;
+  padding: 0.55rem 0.7rem;
+  font: inherit;
+  font-size: 0.95rem;
+  color: var(--texto);
+  background: var(--fondo);
+  border: 1px solid var(--borde);
+  border-radius: 6px;
+}
+
+input:focus, select:focus, textarea:focus {
+  outline: 2px solid var(--acento);
+  outline-offset: -1px;
+}
+
+.campo { margin-bottom: 1rem; }
+.pista { font-size: 0.82rem; color: var(--tenue); margin-top: 0.3rem; }
+
+button {
+  font: inherit;
+  font-size: 0.93rem;
+  padding: 0.55rem 1rem;
+  border-radius: 6px;
+  border: 1px solid var(--acento);
+  background: var(--acento);
+  color: var(--acento-texto);
+  cursor: pointer;
+}
+
+button:hover:not(:disabled) { filter: brightness(1.08); }
+button:disabled { opacity: 0.55; cursor: not-allowed; }
+
+button.secundario {
+  background: transparent;
+  color: var(--texto);
+  border-color: var(--borde);
+}
+
+button.peligro {
+  background: transparent;
+  color: var(--error);
+  border-color: var(--error);
+}
+
+button.enlace {
+  background: none;
+  border: none;
+  color: var(--tenue);
+  padding: 0;
+  font-size: 0.93rem;
+}
+
+button.enlace:hover { color: var(--texto); text-decoration: underline; }
+
+button.ancho { width: 100%; }
+
+/* ---------- Avisos ---------- */
+.aviso {
+  padding: 0.65rem 0.85rem;
+  border-radius: 6px;
+  font-size: 0.89rem;
+  margin-bottom: 1rem;
+}
+
+.aviso:empty { display: none; }
+.aviso.error { background: var(--error-fondo); color: var(--error); }
+.aviso.exito { background: var(--exito-fondo); color: var(--exito); }
+.aviso.atencion { background: var(--aviso-fondo); color: var(--aviso); }
+
+/* ---------- Tablas y listas ---------- */
+table { width: 100%; border-collapse: collapse; font-size: 0.9rem; }
+th, td { text-align: left; padding: 0.6rem 0.5rem; border-bottom: 1px solid var(--borde); }
+th { color: var(--tenue); font-weight: 550; font-size: 0.82rem; }
+tbody tr:last-child td { border-bottom: none; }
+
+td a { color: var(--acento); text-decoration: none; }
+td a:hover { text-decoration: underline; }
+
+.etiqueta {
+  display: inline-block;
+  padding: 0.12rem 0.5rem;
+  border-radius: 99px;
+  font-size: 0.77rem;
+  font-weight: 550;
+}
+
+.etiqueta.pendiente { background: var(--aviso-fondo); color: var(--aviso); }
+.etiqueta.sincronizada { background: var(--exito-fondo); color: var(--exito); }
+
+.vacio {
+  text-align: center;
+  padding: 2.5rem 1rem;
+  color: var(--tenue);
+}
+
+.mono {
+  font-family: ui-monospace, "Cascadia Code", Consolas, monospace;
+  font-size: 0.85rem;
+}
+
+.cargando { color: var(--tenue); font-size: 0.9rem; }
+
+/* ---------- Bloque de secreto (token, topic) ---------- */
+.secreto {
+  display: flex;
+  gap: 0.5rem;
+  align-items: stretch;
+  margin: 0.6rem 0;
+}
+
+.secreto code {
+  flex: 1;
+  padding: 0.55rem 0.7rem;
+  background: var(--fondo);
+  border: 1px solid var(--borde);
+  border-radius: 6px;
+  font-family: ui-monospace, "Cascadia Code", Consolas, monospace;
+  font-size: 0.82rem;
+  word-break: break-all;
+}
+
+.qr { display: block; margin: 1rem auto; max-width: 220px; border-radius: var(--radio); }
+
+/* ---------- Interruptor ---------- */
+.interruptor {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.interruptor label { margin: 0; font-weight: 400; }
+
+/* ---------- Diálogo ---------- */
+dialog {
+  border: 1px solid var(--borde);
+  border-radius: var(--radio);
+  background: var(--superficie);
+  color: var(--texto);
+  padding: 1.5rem;
+  max-width: 900px;
+  width: 92vw;
+}
+
+dialog::backdrop { background: rgba(0, 0, 0, 0.5); }
+
+.acciones {
+  display: flex;
+  gap: 0.6rem;
+  flex-wrap: wrap;
+  margin-top: 1.1rem;
+}
+
+@media (max-width: 640px) {
+  .topbar { flex-wrap: wrap; }
+  main { padding: 1.25rem 1rem 3rem; }
+}

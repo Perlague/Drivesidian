@@ -1,0 +1,27 @@
+<%- include('partials/head', { title }) %>
+<%- include('partials/nav', { current: 'notes' }) %>
+
+<main>
+  <h1>Mis notas</h1>
+  <p class="subtitulo" id="resumen">Las notas llegan solas desde el agente instalado en tu equipo.</p>
+
+  <div class="aviso" id="aviso"></div>
+
+  <div class="tarjeta">
+    <table>
+      <thead>
+        <tr>
+          <th>Nota</th>
+          <th>Estado</th>
+          <th>Versión</th>
+          <th>Último cambio</th>
+        </tr>
+      </thead>
+      <tbody id="tabla-notas">
+        <tr><td colspan="4" class="cargando">Cargando…</td></tr>
+      </tbody>
+    </table>
+  </div>
+</main>
+
+<%- include('partials/foot', { pageScript: '/js/notes.js' }) %>

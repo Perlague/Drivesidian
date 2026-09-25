@@ -170,9 +170,15 @@ const me = async (req, res) => {
   if (!user) {
     return error(res, 'Usuario no encontrado.', 404);
   }
-  // El topic no está en la base: se deriva del id. El panel lo necesita para
-  // dibujar el QR de suscripción.
-  success(res, { ...user, ntfy_topic: topicForUser(user.id), ntfy_url: topicUrl(user.id) });
+  // El topic no está en la base: se deriva del id. El QR se dibuja aquí con la
+  // misma librería que el de 2FA, en vez de cargar otra en el navegador.
+  const url = topicUrl(user.id);
+  success(res, {
+    ...user,
+    ntfy_topic: topicForUser(user.id),
+    ntfy_url: url,
+    ntfy_qr: await qrcode.toDataURL(url),
+  });
 };
 
 // PATCH /api/users/me/notifications — el interruptor vive en el panel web; el
