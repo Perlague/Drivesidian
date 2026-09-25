@@ -1,0 +1,67 @@
+# Despliegue SIN dominio ni certificado, con un túnel de ngrok.
+#
+# En el .env:
+#   COMPOSE_FILE=docker-compose.yml:docker-compose.ngrok.yml
+#   NGROK_AUTHTOKEN=...   (de dashboard.ngrok.com/get-started/your-authtoken)
+#
+# Y luego, como siempre:
+#   docker compose up -d
+#   docker compose logs server        # el banner dice a qué URL conectarse
+#
+# Para qué sirve: levantar el proyecto en cualquier máquina —la EC2 o un
+# portátil— y obtener una URL pública con HTTPS sin comprar dominio, sin tocar
+# DNS y sin abrir el 80 y el 443 en el Security Group. El agente del usuario
+# final puede llegar a ella desde su casa.
+#
+# Qué se pierde frente al despliegue con Caddy:
+#   - La URL cambia en cada reinicio del túnel (plan gratuito). El servidor la
+#     detecta solo y la escribe en su log, pero el agente ya vinculado apunta a
+#     la anterior y hay que volver a vincularlo.
+#   - Va un salto más de red por medio, con su latencia.
+#   - El plan gratuito mete una página de aviso la primera vez que alguien abre
+#     el enlace en un navegador.
+#
+# Por eso esto es el camino de demo y de pruebas, no el definitivo: para algo
+# permanente, dominio + Caddy.
+
+services:
+  ngrok:
+    image: ngrok/ngrok:latest
+    restart: unless-stopped
+    depends_on: [server]
+    command: ["start", "--all", "--config", "/etc/ngrok/ngrok.yml", "--log", "stdout"]
+    environment:
+      # Se saca de https://dashboard.ngrok.com/get-started/your-authtoken
+      NGROK_AUTHTOKEN: ${NGROK_AUTHTOKEN:?falta NGROK_AUTHTOKEN en el .env}
+    volumes:
+      - ./ngrok.yml:/etc/ngrok/ngrok.yml:ro
+    # El 4040 NO se publica al host: la API del agente no pide autenticación y
+    # permite abrir túneles nuevos. Solo el servidor la alcanza, por la red
+    # interna. Para ver el inspector desde el host, descomentar:
+    #   ports: ["4040:4040"]
+    mem_limit: 128m
+    networks: [interna]
+
+  server:
+    environment:
+      # Le dice al servidor que espere a que el túnel levante en vez de resolver
+      # una sola vez: los dos contenedores arrancan a la vez y el túnel tarda un
+      # par de segundos. También activa el refresco periódico, para que un
+      # reinicio de ngrok se note en el log.
+      USE_NGROK: 1
+      NGROK_API: http://ngrok:4040/api/tunnels
+      # Vacías a propósito: con ngrok la URL pública la asigna el túnel, y
+      # cualquier valor aquí ganaría sobre la detección.
+      PUBLIC_URL: ""
+      DOMAIN: ""
+      # Un salto de proxy: el agente de ngrok. Sin esto, todos los eventos de
+      # seguridad llegarían con la IP del contenedor de ngrok en vez de la del
+      # cliente, que es justo el dato que Guardian necesita.
+      TRUST_PROXY: 1
+
+# Caddy no entra en este camino y no hay que desactivarlo: vive en su propia
+# override (docker-compose.caddy.yml) y aquí simplemente no se incluye. ngrok
+# termina el TLS y va directo al servidor.
+#
+# Los encabezados de seguridad no se pierden por eso: los pone Express, en
+# server/src/middleware/securityHeaders.js, no Caddy.

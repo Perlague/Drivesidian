@@ -8,6 +8,7 @@ const { startSchema } = require('../schemas/pairing/start');
 const { approveSchema } = require('../schemas/pairing/approve');
 const { success, error, validationError } = require('../utils/response');
 const { logSecurityEvent, SEVERITY, EVENTS } = require('../utils/securityLog');
+const { getPublicUrl } = require('../utils/publicUrl');
 const { PAIRING_TTL_MS } = require('../config');
 
 // Alfabeto sin caracteres que se confundan al leerlos en pantalla (0/O, 1/I/L).
@@ -26,8 +27,12 @@ const randomCode = () => {
 
 const sha256 = (value) => crypto.createHash('sha256').update(value).digest('hex');
 
+// La base sale de utils/publicUrl: con ngrok la asigna el túnel y cambia en
+// cada arranque, así que no puede leerse del entorno. `req.get('host')` queda
+// como último recurso porque detrás de un proxy es el contenedor, no el dominio
+// al que el usuario puede llegar.
 const pairUrl = (req, code) => {
-  const base = process.env.PUBLIC_URL || `${req.protocol}://${req.get('host')}`;
+  const base = getPublicUrl() || `${req.protocol}://${req.get('host')}`;
   return `${base}/pair?code=${encodeURIComponent(code)}`;
 };
 

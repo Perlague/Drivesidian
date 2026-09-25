@@ -1,0 +1,20 @@
+version: "2"
+
+# El agente de ngrok expone su API local en 4040. Por defecto la ata a
+# 127.0.0.1, que dentro de un contenedor significa "solo yo": el servidor no
+# podría preguntarle cuál es la URL del túnel. Con 0.0.0.0 queda alcanzable
+# desde la red interna de compose como http://ngrok:4040.
+#
+# No se publica ese puerto hacia afuera (ver docker-compose.ngrok.yml): la API
+# del agente no pide autenticación y permite abrir túneles nuevos.
+web_addr: 0.0.0.0:4040
+
+# El authtoken NO va aquí: lo lee del entorno (NGROK_AUTHTOKEN), para no acabar
+# con una credencial versionada en el repo.
+
+tunnels:
+  drivesidian:
+    proto: http
+    # El nombre del servicio en la red interna de compose, no localhost: el
+    # agente corre en su propio contenedor.
+    addr: server:3000

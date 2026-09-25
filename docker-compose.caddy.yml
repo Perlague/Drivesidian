@@ -1,0 +1,44 @@
+# Despliegue con dominio propio y TLS automático. Es el camino definitivo.
+#
+# En el .env:
+#   COMPOSE_FILE=docker-compose.yml:docker-compose.caddy.yml
+#   DOMAIN=drivesidian.tudominio.com
+#   ACME_EMAIL=tu-correo@ejemplo.com
+#   PUBLIC_URL=https://drivesidian.tudominio.com
+#
+# Requisitos que no dependen de este archivo: el dominio tiene que resolver a la
+# IP de la instancia, y el Security Group tiene que dejar entrar el 80 y el 443.
+# El 80 no es opcional: Let's Encrypt lo usa para validar y renovar.
+#
+# En local, DOMAIN=localhost hace que Caddy use su CA interna y sirva por HTTPS
+# sin pedirle nada a Let's Encrypt.
+
+services:
+  caddy:
+    image: caddy:2-alpine
+    restart: unless-stopped
+    depends_on: [server]
+    ports:
+      # 80 lo necesita Let's Encrypt para validar el dominio y renovar solo.
+      - "80:80"
+      - "443:443"
+    environment:
+      DOMAIN: ${DOMAIN:?falta DOMAIN en el .env}
+      ACME_EMAIL: ${ACME_EMAIL:?falta ACME_EMAIL en el .env}
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      # Sin estos volúmenes, Caddy pediría un certificado nuevo en cada
+      # reinicio y chocaría con los límites de Let's Encrypt.
+      - caddy-data:/data
+      - caddy-config:/config
+    mem_limit: 128m
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+    networks: [interna]
+
+volumes:
+  caddy-data:
+  caddy-config:

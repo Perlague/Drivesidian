@@ -1,32 +1,148 @@
 # Desplegar el servidor
 
-Todo el servidor —API, panel web, base de datos y TLS— vive en una sola
-instancia EC2 y se levanta con Docker Compose.
+Todo el servidor —API, panel web y base de datos— vive en una sola instancia
+EC2 y se levanta con Docker Compose.
 
-## Requisitos
+**Hay dos caminos, y se eligen con una línea del `.env`.** Cambia solo cómo
+llega el tráfico de internet al servidor; todo lo demás es idéntico.
+
+| | (A) Túnel de ngrok | (B) Dominio propio + Caddy |
+|---|---|---|
+| Hace falta | Una cuenta gratis de ngrok | Un dominio y abrir el 80/443 |
+| URL | La asigna ngrok, cambia en cada reinicio | Fija, la tuya |
+| TLS | Lo pone ngrok | Let's Encrypt, automático |
+| Para qué | Probar, demos, enseñar el proyecto | Lo definitivo |
+
+Empieza por (A): levanta en dos minutos y no toca DNS ni el Security Group.
+Pásate a (B) cuando tengas dominio.
+
+## Requisitos comunes
 
 - Una instancia con Docker y el plugin de Compose.
-- Un dominio apuntando a la IP pública de la instancia. Let's Encrypt lo valida
-  por HTTP, así que tiene que resolver **antes** de levantar el stack.
 - Un repositorio de GitHub **privado** para las notas, y un Personal Access
   Token con permiso de escritura sobre él.
 
-## Puesta en marcha
+---
+
+## (A) Levantar con ngrok
+
+Pasos completos, desde cero:
+
+```bash
+# 1. Traer el código
+git clone https://github.com/Perlague/Drivesidian.git
+cd Drivesidian
+cp .env.example .env
+
+# 2. Generar los tres secretos y pegarlos en el .env
+node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"   # x3
+
+# 3. En el .env, dejar esta línea (viene así por defecto):
+#      COMPOSE_FILE=docker-compose.yml:docker-compose.ngrok.yml
+#    y poner el authtoken de https://dashboard.ngrok.com/get-started/your-authtoken
+#      NGROK_AUTHTOKEN=...
+
+# 4. Arriba
+docker compose up -d
+
+# 5. El log dice a qué URL conectarse
+docker compose logs server
+```
+
+El log termina con el enlace:
+
+```
+────────────────────────────────────────────────────────────────
+  Drivesidian está arriba.
+
+  Panel web:   https://lawless-trudy-unspurious.ngrok-free.dev
+  Origen:      túnel de ngrok, detectado solo
+
+  Para vincular un equipo, el agente necesita esta URL:
+      DRIVESIDIAN_API_URL=https://lawless-trudy-unspurious.ngrok-free.dev
+────────────────────────────────────────────────────────────────
+```
+
+Esa URL es el panel web. Ábrela en el navegador y ya puedes registrarte.
+
+**Nadie copia la URL a mano.** El servidor le pregunta al agente de ngrok cuál
+le tocó (`http://ngrok:4040/api/tunnels`) y la usa para armar los enlaces de
+vinculación. Si ngrok se reinicia y cambia, el servidor lo detecta en menos de
+un minuto y lo vuelve a escribir en el log.
+
+### Lo que hay que saber de ngrok
+
+- **La URL cambia en cada reinicio del túnel** (plan gratuito). Un agente ya
+  vinculado sigue apuntando a la anterior y deja de conectar: hay que volver a
+  vincularlo. Es la razón principal para pasarse a (B).
+- **La primera visita desde un navegador muestra una página de aviso de ngrok**
+  con un botón "Visit Site". Es del plan gratuito, sale una vez por visitante.
+  A las llamadas del agente no les afecta.
+- **No publiques el puerto 4040.** La API del agente de ngrok no pide
+  autenticación y permite abrir túneles nuevos. Por eso solo es alcanzable
+  desde la red interna de compose.
+
+---
+
+## (B) Levantar con dominio propio
+
+Antes de nada, el dominio tiene que resolver **ya** a la IP de la instancia:
+Let's Encrypt valida por el puerto 80 y falla si no llega.
 
 ```bash
 git clone https://github.com/Perlague/Drivesidian.git
 cd Drivesidian
 cp .env.example .env
-nano .env          # ver la tabla de abajo
+nano .env
 docker compose up -d
 ```
 
-Eso es todo. El contenedor del servidor aplica las migraciones antes de
-arrancar, y Caddy saca el certificado solo.
+En el `.env`, cambiar el camino y rellenar el dominio:
+
+```
+COMPOSE_FILE=docker-compose.yml:docker-compose.caddy.yml
+DOMAIN=drivesidian.tudominio.com
+ACME_EMAIL=tu-correo@ejemplo.com
+PUBLIC_URL=https://drivesidian.tudominio.com
+```
+
+Caddy saca y renueva el certificado solo. En local, `DOMAIN=localhost` usa su CA
+interna y sirve por HTTPS sin pedirle nada a Let's Encrypt.
+
+---
+
+## En los dos casos
+
+El contenedor del servidor aplica las migraciones antes de arrancar, así que no
+hay ningún paso manual de base de datos.
 
 ```bash
-docker compose ps          # los tres deben estar "healthy"
+docker compose ps          # todos deben estar "healthy"
 docker compose logs -f     # seguir el arranque
+```
+
+> **Si estás en Windows**, el separador de `COMPOSE_FILE` es `;` en vez de `:`
+> (porque `:` aparece en rutas como `C:\`). En la EC2, que es Linux, va `:`.
+
+## Poner el agente en el equipo del usuario
+
+El instalador lleva la URL del servidor dentro, así que se construye apuntando a
+la que tocó:
+
+```powershell
+cd installer
+.\build.ps1 -ApiUrl https://lawless-trudy-unspurious.ngrok-free.dev
+```
+
+Sale `dist\DrivesidianAgentSetup.exe`. El usuario lo ejecuta y el agente abre
+solo la página de vinculación. El detalle está en `AGENTE.md`.
+
+Para probar el agente sin construir el instalador, basta la variable de entorno:
+
+```powershell
+$env:DRIVESIDIAN_API_URL = "https://lawless-trudy-unspurious.ngrok-free.dev"
+cd agent
+pnpm start
 ```
 
 ## Variables de entorno

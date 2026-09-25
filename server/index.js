@@ -7,6 +7,8 @@ const { success, error } = require('./src/utils/response');
 const { MAX_REQUEST_BODY } = require('./src/config');
 const { startSyncWorker } = require('./src/workers/syncWorker');
 const { startRetentionWorker } = require('./src/workers/retentionWorker');
+const securityHeaders = require('./src/middleware/securityHeaders');
+const { iniciarResolucion, getFuente } = require('./src/utils/publicUrl');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -20,6 +22,11 @@ if (process.env.TRUST_PROXY) {
   const trustProxy = Number(process.env.TRUST_PROXY);
   app.set('trust proxy', Number.isNaN(trustProxy) ? process.env.TRUST_PROXY : trustProxy);
 }
+
+// Antes de cualquier ruta, para que los apliquen también las respuestas de
+// error y los archivos estáticos. Estaban en el Caddyfile hasta que se añadió
+// el despliegue con ngrok, que no pasa por Caddy.
+app.use(securityHeaders);
 
 // Sin límite explícito, express.json usa 100 kb por defecto y rechaza con un
 // 413 poco claro cualquier nota medianamente grande. Ver MAX_REQUEST_BODY.
@@ -83,8 +90,45 @@ app.use((err, req, res, next) => {
   return error(res, 'Error interno del servidor.', 500);
 });
 
-app.listen(PORT, () => {
+// El banner del arranque. Existe porque con ngrok la URL pública la asigna el
+// túnel al azar en cada arranque: si el log no la dice, no hay forma de saber a
+// dónde conectarse sin ir a buscarla al panel de ngrok.
+const anunciar = ({ url, fuente }) => {
+  const linea = '─'.repeat(64);
+  const origen = {
+    ngrok: 'túnel de ngrok, detectado solo',
+    PUBLIC_URL: 'PUBLIC_URL del entorno',
+    DOMAIN: 'DOMAIN del entorno',
+    local: 'sin URL pública configurada',
+  }[fuente] || fuente;
+
+  console.log(`
+${linea}`);
+  console.log('  Drivesidian está arriba.');
+  console.log('');
+  console.log(`  Panel web:   ${url}`);
+  console.log(`  Origen:      ${origen}`);
+  console.log('');
+  console.log('  Para vincular un equipo, el agente necesita esta URL:');
+  console.log(`      DRIVESIDIAN_API_URL=${url}`);
+
+  if (fuente === 'local') {
+    console.log('');
+    console.log('  Ojo: esta URL solo sirve desde esta misma máquina. Para que el');
+    console.log('  agente de otro equipo llegue, levanta ngrok o pon PUBLIC_URL.');
+  }
+
+  console.log(`${linea}
+`);
+};
+
+app.listen(PORT, async () => {
   console.log(`Drivesidian server escuchando en el puerto ${PORT}`);
+
+  // Se resuelve después de escuchar, no antes: con ngrok esto puede tardar unos
+  // segundos y el servidor ya puede atender peticiones mientras tanto.
+  const { url } = await iniciarResolucion();
+  anunciar({ url, fuente: getFuente() });
 });
 
 startSyncWorker();

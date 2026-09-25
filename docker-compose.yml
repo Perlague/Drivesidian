@@ -1,4 +1,15 @@
-# Despliegue completo: git clone + llenar .env + docker compose up -d
+# Base del despliegue: Postgres + la API. El proxy va en una override, porque
+# hay dos caminos y son excluyentes:
+#
+#   COMPOSE_FILE=docker-compose.yml:docker-compose.caddy.yml   → dominio + TLS propio
+#   COMPOSE_FILE=docker-compose.yml:docker-compose.ngrok.yml   → túnel, sin dominio
+#
+# Esa línea va en el .env, así que el comando sigue siendo uno solo:
+# git clone + llenar .env + docker compose up -d
+#
+# Va en una override y no en perfiles porque compose interpola TODO el archivo
+# antes de aplicar los perfiles: un ${DOMAIN:?} en un servicio desactivado
+# tumbaría igual el arranque del otro camino. Verificado.
 #
 # Los límites de memoria están dimensionados para la t3.small de 2 GB, que
 # además comparte máquina con OpenClaw/Guardian. Son un punto de partida:
@@ -54,9 +65,13 @@ services:
       # Express confía en un salto de proxy. Sin esto, TODOS los eventos de
       # seguridad llegarían con la IP del contenedor de Caddy.
       TRUST_PROXY: 1
-      # Las URLs de vinculación que abre el agente tienen que apuntar al dominio
-      # público, no a lo que vea Express por dentro.
-      PUBLIC_URL: https://${DOMAIN:?falta DOMAIN en el .env}
+
+      # De aquí sale la URL de vinculación que el agente abre en el navegador.
+      # Ninguna es obligatoria: si las dos van vacías el servidor le pregunta al
+      # túnel de ngrok, y si tampoco hay túnel cae a localhost. El orden y el
+      # porqué están en server/src/utils/publicUrl.js.
+      PUBLIC_URL: ${PUBLIC_URL:-}
+      DOMAIN: ${DOMAIN:-}
 
       JWT_SECRET: ${JWT_SECRET:?falta JWT_SECRET en el .env}
       TOTP_ENCRYPTION_KEY: ${TOTP_ENCRYPTION_KEY:?falta TOTP_ENCRYPTION_KEY en el .env}
@@ -86,35 +101,8 @@ services:
         max-file: "5"
     networks: [interna]
 
-  caddy:
-    image: caddy:2-alpine
-    restart: unless-stopped
-    depends_on: [server]
-    ports:
-      # 80 lo necesita Let's Encrypt para validar el dominio y renovar solo.
-      - "80:80"
-      - "443:443"
-    environment:
-      DOMAIN: ${DOMAIN}
-      ACME_EMAIL: ${ACME_EMAIL:?falta ACME_EMAIL en el .env}
-    volumes:
-      - ./Caddyfile:/etc/caddy/Caddyfile:ro
-      # Sin estos volúmenes, Caddy pediría un certificado nuevo en cada
-      # reinicio y chocaría con los límites de Let's Encrypt.
-      - caddy-data:/data
-      - caddy-config:/config
-    mem_limit: 128m
-    logging:
-      driver: json-file
-      options:
-        max-size: "10m"
-        max-file: "3"
-    networks: [interna]
-
 volumes:
   postgres-data:
-  caddy-data:
-  caddy-config:
 
 networks:
   interna:
