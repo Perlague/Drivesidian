@@ -1,0 +1,6 @@
+{
+  "_comentario": "El agente escribe este archivo solo al vincularse; no hace falta crearlo a mano. Vive en %APPDATA%\\Drivesidian\\config.json (Windows) o ~/.config/drivesidian/config.json.",
+  "apiUrl": "https://drivesidian.ejemplo.com",
+  "agentToken": "se-rellena-al-vincular-el-equipo",
+  "vaultPath": "C:\\Users\\tu-usuario\\TuVault"
+}
