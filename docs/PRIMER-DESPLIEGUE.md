@@ -95,11 +95,15 @@ contraseña.
 ## Parte 4 — ngrok: dominio fijo
 
 1. Entra a **https://dashboard.ngrok.com/domains**
-2. Botón **+ Create Domain** (o **+ New Domain**)
-3. Deja el nombre que te propone, o escribe uno libre
-4. Botón **Create**
-5. **Apunta en tu bloc:** `DOMINIO_NGROK` = lo que quedó, algo como
-   `algo-algo-algo.ngrok-free.app` (sin `https://`)
+2. **Mira si ya hay uno en la lista**, con la etiqueta azul `dev domain`. El plan
+   gratuito da **uno solo**, y las cuentas nuevas ya vienen con él creado.
+   - **Si ya lo tienes:** ese es. Pasa al punto 4.
+   - **Si la lista está vacía:** botón **+ New Domain** → **Create**
+3. Si el botón no te deja crear otro, es porque ya tienes el tuyo. Usa ese.
+4. Copia el texto de la columna **Domain**
+5. **Apunta en tu bloc:** `DOMINIO_NGROK` = eso, sin `https://`. Algo como
+   `tres-palabras-raras.ngrok-free.dev` (unas cuentas lo dan terminado en `.dev`
+   y otras en `.app`; usa el tuyo tal cual sale en la tabla)
 
 **Dónde se usa:** este NO va en el `.env`. Va en el archivo **`ngrok.yml`** de la
 raíz del proyecto, en la **Parte 9**.
@@ -233,7 +237,7 @@ Al final del archivo, debajo de la línea `addr: server:3000`, añade una línea
 nueva **con 4 espacios de sangría al inicio**:
 
 ```
-    domain: algo-algo-algo.ngrok-free.app
+    domain: tres-palabras-raras.ngrok-free.dev
 ```
 
 Queda así:
@@ -243,7 +247,7 @@ tunnels:
   drivesidian:
     proto: http
     addr: server:3000
-    domain: algo-algo-algo.ngrok-free.app
+    domain: tres-palabras-raras.ngrok-free.dev
 ```
 
 Guarda: **Ctrl + O**, **Enter**, **Ctrl + X**
@@ -275,11 +279,11 @@ Al final del texto sale tu enlace:
 ────────────────────────────────────────────────────────────────
   Drivesidian está arriba.
 
-  Panel web:   https://algo-algo-algo.ngrok-free.app
+  Panel web:   https://tres-palabras-raras.ngrok-free.dev
   Origen:      túnel de ngrok, detectado solo
 
   Para vincular un equipo, el agente necesita esta URL:
-      DRIVESIDIAN_API_URL=https://algo-algo-algo.ngrok-free.app
+      DRIVESIDIAN_API_URL=https://tres-palabras-raras.ngrok-free.dev
 ────────────────────────────────────────────────────────────────
 ```
 
@@ -310,7 +314,7 @@ Vuelve a **tu Windows**, terminal en la carpeta del proyecto:
 
 ```powershell
 cd installer
-.\build.ps1 -ApiUrl https://algo-algo-algo.ngrok-free.app
+.\build.ps1 -ApiUrl https://tres-palabras-raras.ngrok-free.dev
 ```
 
 (usa tu `URL_PANEL` en vez de ese ejemplo)
