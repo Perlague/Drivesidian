@@ -45,6 +45,14 @@ const cargar = async () => {
   document.getElementById('ruta').textContent = nota.vault_path;
   actualizarMeta(nota);
 
+  // Una nota con conflicto no se edita: primero se decide qué versión gana.
+  // Guardar encima crearía un tercer estado y el usuario perdería de vista que
+  // hay una decisión pendiente.
+  if (nota.conflict_content !== null) {
+    mostrarPanelConflicto(nota);
+    return;
+  }
+
   version = nota.version;
   guardado = nota.content;
   entrada.value = nota.content;
@@ -52,6 +60,36 @@ const cargar = async () => {
   botonGuardar.disabled = false;
   render();
 };
+
+const mostrarPanelConflicto = (nota) => {
+  // textContent y no innerHTML: es contenido de nota sin sanitizar.
+  document.getElementById('conflicto-local').textContent = nota.conflict_content;
+  document.getElementById('conflicto-servidor').textContent = nota.content;
+  document.getElementById('panel-conflicto').hidden = false;
+  document.getElementById('editor-layout').hidden = true;
+  botonGuardar.hidden = true;
+};
+
+const resolver = async (quedarse, boton) => {
+  limpiarAviso(aviso);
+  boton.disabled = true;
+
+  const res = await API.post(`/notes/${window.NOTE_ID}/resolve`, { keep: quedarse });
+  boton.disabled = false;
+
+  if (!res.ok) {
+    mostrarAviso(aviso, res.message);
+    return;
+  }
+
+  // Se recarga para volver al editor normal con la versión ganadora.
+  window.location.reload();
+};
+
+document.getElementById('btn-quedarme-local')
+  .addEventListener('click', (e) => resolver('local', e.target));
+document.getElementById('btn-quedarme-servidor')
+  .addEventListener('click', (e) => resolver('server', e.target));
 
 const actualizarMeta = (nota) => {
   const estado = nota.sync_status === 'synced' ? 'sincronizada' : 'pendiente de subir';

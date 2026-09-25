@@ -174,6 +174,20 @@ const resolveKeepLocal = async (id, userId) => {
   return result.rows[0] || null;
 };
 
+// Creación desde el panel web. A diferencia del camino del agente, aquí NO se
+// sobrescribe si la ruta ya existe: quien teclea un nombre que ya está en uso
+// se equivocó, y pisar su nota sin avisar sería lo peor que podría pasarle.
+const createFromWeb = async (userId, vaultPath, content) => {
+  const result = await pool.query(
+    `INSERT INTO notes (user_id, vault_path, content, content_hash, version, sync_status, updated_at)
+     VALUES ($1, $2, $3, $4, 1, 'pending', now())
+     ON CONFLICT (user_id, vault_path) DO NOTHING
+     RETURNING ${NOTE_COLUMNS_CON_CONFLICTO}`,
+    [userId, vaultPath, content, hashContent(content)],
+  );
+  return result.rows[0] || null;
+};
+
 // Para la cuota de notas por usuario. Solo se llama cuando llega una ruta
 // nueva, no en cada guardado (ver el controller de sync).
 const countByUser = async (userId) => {
@@ -277,6 +291,7 @@ const markSynced = async (notes) => {
 
 module.exports = {
   syncFromAgent,
+  createFromWeb,
   findChangedSince,
   resolveKeepServer,
   resolveKeepLocal,

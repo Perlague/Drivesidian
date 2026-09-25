@@ -2,8 +2,15 @@
 <%- include('partials/nav', { current: 'notes' }) %>
 
 <main>
-  <h1>Mis notas</h1>
-  <p class="subtitulo" id="resumen">Las notas llegan solas desde el agente instalado en tu equipo.</p>
+  <div class="editor-cabecera">
+    <div>
+      <h1>Mis notas</h1>
+      <p class="subtitulo" id="resumen">Las notas llegan solas desde el agente instalado en tu equipo.</p>
+    </div>
+    <div class="acciones" style="margin: 0;">
+      <button type="button" id="btn-nueva">Nueva nota</button>
+    </div>
+  </div>
 
   <div class="aviso" id="aviso"></div>
 
@@ -23,5 +30,31 @@
     </table>
   </div>
 </main>
+
+<dialog id="dialogo-nueva">
+  <h2>Nueva nota</h2>
+  <form id="form-nueva">
+    <div class="campo">
+      <label for="nombre">Nombre</label>
+      <input type="text" id="nombre" placeholder="ideas" required autocomplete="off" />
+      <p class="pista">
+        Se guardará dentro de <code>Drivesidian/</code> y con extensión
+        <code>.md</code>. Puedes usar carpetas: <code>proyectos/tesis</code>.
+      </p>
+    </div>
+
+    <p class="aviso atencion" style="margin-bottom: 0;">
+      Aparecerá en tu Obsidian en cuanto tu equipo esté encendido y el agente
+      consulte al servidor.
+    </p>
+
+    <div class="aviso" id="aviso-nueva"></div>
+
+    <div class="acciones">
+      <button type="submit" id="btn-crear">Crear</button>
+      <button type="button" class="secundario" id="btn-cancelar-nueva">Cancelar</button>
+    </div>
+  </form>
+</dialog>
 
 <%- include('partials/foot', { pageScript: '/js/notes.js' }) %>

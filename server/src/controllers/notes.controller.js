@@ -4,6 +4,7 @@ const { syncSchema } = require('../schemas/notes/sync');
 const { updateSchema } = require('../schemas/notes/update');
 const { changesQuerySchema } = require('../schemas/notes/changes');
 const { resolveSchema } = require('../schemas/notes/resolve');
+const { createSchema } = require('../schemas/notes/create');
 const notesModel = require('../models/notes.model');
 const { success, error, validationError, conflict } = require('../utils/response');
 const {
@@ -70,6 +71,43 @@ const sync = async (req, res) => {
   // reencoló nada. Se responde 200 igual: desde el punto de vista del agente
   // el reporte se aceptó. El flag va en el payload para su log.
   success(res, { ...note, changed: outcome !== 'unchanged', outcome });
+};
+
+// POST /api/notes — exclusivo de la web. El agente nunca crea por aquí: él
+// reporta lo que encuentra en el disco, que es otro camino.
+const create = async (req, res) => {
+  if (req.auth.type !== 'user') {
+    return error(res, 'Este endpoint es exclusivo de la sesión web.', 403);
+  }
+
+  const parsed = createSchema.safeParse(req.body);
+  if (!parsed.success) {
+    return validationError(res, parsed.error);
+  }
+
+  const total = await notesModel.countByUser(req.auth.userId);
+  if (total >= MAX_NOTES_PER_USER) {
+    logSecurityEvent({
+      type: EVENTS.QUOTA_EXCEEDED,
+      severity: SEVERITY.WARN,
+      userId: req.auth.userId,
+      req,
+      details: { quota: MAX_NOTES_PER_USER, total, vault_path: parsed.data.vault_path },
+    });
+    return error(res, `Alcanzaste el máximo de ${MAX_NOTES_PER_USER} notas.`, 403);
+  }
+
+  const creada = await notesModel.createFromWeb(
+    req.auth.userId,
+    parsed.data.vault_path,
+    parsed.data.content,
+  );
+
+  if (!creada) {
+    return error(res, `Ya tienes una nota en "${parsed.data.vault_path}".`, 409);
+  }
+
+  success(res, creada, 201);
 };
 
 // GET /api/notes/changes — exclusivo del agente, con alcance notes:read.
@@ -226,4 +264,4 @@ const syncNow = async (req, res) => {
   success(res, { synced: result });
 };
 
-module.exports = { sync, syncNow, changes, resolve, list, getOne, update };
+module.exports = { sync, syncNow, create, changes, resolve, list, getOne, update };

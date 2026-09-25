@@ -3,6 +3,11 @@
 const MAX_NOTE_BYTES = 1024 * 1024; // 1 MiB
 
 module.exports = {
+  // Carpeta del vault que se sincroniza. El agente la vigila y las notas
+  // creadas desde la web se encauzan dentro de ella, o nunca llegarían al
+  // disco del usuario.
+  SYNCED_FOLDER: 'Drivesidian',
+
   SESSION_COOKIE_NAME: 'drivesidian_session',
   SESSION_TTL_SECONDS: 60 * 60 * 8, // 8 horas
 

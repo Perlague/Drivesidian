@@ -15,7 +15,37 @@
 
   <div class="aviso" id="aviso"></div>
 
-  <div class="editor-layout">
+  <!-- Resolución de conflicto. Reemplaza al editor cuando la nota tiene una
+       decisión pendiente: editar encima crearía un tercer estado. -->
+  <section id="panel-conflicto" hidden>
+    <div class="aviso atencion">
+      <strong>Esta nota cambió en los dos lados.</strong>
+      Tu equipo y el servidor tienen versiones distintas, y nadie las ha pisado.
+      Elige con cuál quedarte.
+    </div>
+
+    <div class="comparacion">
+      <div>
+        <h3>La de tu computadora</h3>
+        <pre class="mono" id="conflicto-local"></pre>
+      </div>
+      <div>
+        <h3>La del servidor</h3>
+        <pre class="mono" id="conflicto-servidor"></pre>
+      </div>
+    </div>
+
+    <div class="acciones">
+      <button type="button" id="btn-quedarme-local">Mantener la de mi computadora</button>
+      <button type="button" class="secundario" id="btn-quedarme-servidor">Mantener la del servidor</button>
+    </div>
+    <p class="pista">
+      La que descartes se pierde. Si quieres quedarte con partes de las dos,
+      cópialas antes de elegir.
+    </p>
+  </section>
+
+  <div class="editor-layout" id="editor-layout">
     <textarea id="markdown-input" spellcheck="false"
               placeholder="Escribe tu nota en markdown…" disabled></textarea>
     <div id="preview" class="preview"></div>

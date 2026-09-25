@@ -201,6 +201,15 @@ td a:hover { text-decoration: underline; }
 .etiqueta.pendiente { background: var(--aviso-fondo); color: var(--aviso); }
 .etiqueta.sincronizada { background: var(--exito-fondo); color: var(--exito); }
 
+/* El conflicto es lo único de esta lista que exige una decisión del usuario,
+   así que se distingue de "pendiente" —que se resuelve solo— con el color de
+   error y un borde. */
+.etiqueta.conflicto {
+  background: var(--error-fondo);
+  color: var(--error);
+  border: 1px solid currentColor;
+}
+
 .vacio {
   text-align: center;
   padding: 2.5rem 1rem;

@@ -3,6 +3,9 @@
 const aviso = document.getElementById('aviso');
 const tabla = document.getElementById('tabla-notas');
 const resumen = document.getElementById('resumen');
+const dialogo = document.getElementById('dialogo-nueva');
+const avisoNueva = document.getElementById('aviso-nueva');
+const inputNombre = document.getElementById('nombre');
 
 const ESTADOS = {
   pending: { texto: 'Pendiente', clase: 'pendiente' },
@@ -16,17 +19,24 @@ const pintar = (notas) => {
     tabla.innerHTML = `
       <tr><td colspan="4" class="vacio">
         Todavía no hay notas.<br />
-        Instala el agente y guarda un archivo dentro de la carpeta
-        <code>Drivesidian/</code> de tu vault.
+        Crea una aquí, o instala el agente y guarda un archivo dentro de la
+        carpeta <code>Drivesidian/</code> de tu vault.
       </td></tr>`;
     resumen.textContent = 'Las notas llegan solas desde el agente instalado en tu equipo.';
     return;
   }
 
+  const enConflicto = notas.filter((n) => n.in_conflict).length;
   const pendientes = notas.filter((n) => n.sync_status === 'pending').length;
-  resumen.textContent = pendientes > 0
-    ? `${notas.length} nota(s), ${pendientes} pendiente(s) de subir a GitHub.`
-    : `${notas.length} nota(s), todas sincronizadas.`;
+
+  // El conflicto manda en el resumen: es lo único que necesita una decisión.
+  if (enConflicto > 0) {
+    resumen.innerHTML = `<strong>${enConflicto} nota(s) necesitan que elijas una versión.</strong>`;
+  } else {
+    resumen.textContent = pendientes > 0
+      ? `${notas.length} nota(s), ${pendientes} pendiente(s) de subir a GitHub.`
+      : `${notas.length} nota(s), todas sincronizadas.`;
+  }
 
   for (const nota of notas) {
     const fila = document.createElement('tr');
@@ -40,10 +50,15 @@ const pintar = (notas) => {
     ruta.appendChild(enlace);
 
     const estado = document.createElement('td');
-    const info = ESTADOS[nota.sync_status] || { texto: nota.sync_status, clase: '' };
     const etiqueta = document.createElement('span');
-    etiqueta.className = `etiqueta ${info.clase}`;
-    etiqueta.textContent = info.texto;
+    if (nota.in_conflict) {
+      etiqueta.className = 'etiqueta conflicto';
+      etiqueta.textContent = 'En conflicto';
+    } else {
+      const info = ESTADOS[nota.sync_status] || { texto: nota.sync_status, clase: '' };
+      etiqueta.className = `etiqueta ${info.clase}`;
+      etiqueta.textContent = info.texto;
+    }
     estado.appendChild(etiqueta);
 
     const version = document.createElement('td');
@@ -67,5 +82,36 @@ const cargar = async () => {
   }
   pintar(res.data);
 };
+
+// --- Nueva nota ---
+document.getElementById('btn-nueva').addEventListener('click', () => {
+  limpiarAviso(avisoNueva);
+  inputNombre.value = '';
+  dialogo.showModal();
+  inputNombre.focus();
+});
+
+document.getElementById('btn-cancelar-nueva').addEventListener('click', () => dialogo.close());
+
+document.getElementById('form-nueva').addEventListener('submit', async (evento) => {
+  evento.preventDefault();
+  limpiarAviso(avisoNueva);
+
+  const boton = document.getElementById('btn-crear');
+  boton.disabled = true;
+
+  const res = await API.post('/notes', { vault_path: inputNombre.value.trim(), content: '' });
+  boton.disabled = false;
+
+  if (!res.ok) {
+    const detalle = res.fields ? Object.values(res.fields)[0] : res.message;
+    mostrarAviso(avisoNueva, detalle);
+    return;
+  }
+
+  // Se abre en el editor: crear una nota vacía y quedarse mirando la lista no
+  // le sirve a nadie.
+  window.location.href = `/notes/${res.data.id}`;
+});
 
 cargar();

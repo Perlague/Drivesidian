@@ -8,6 +8,7 @@ const { AGENT_RATE_LIMIT, SYNC_NOW_RATE_LIMIT, AGENT_SCOPES } = require('../conf
 const {
   sync,
   syncNow,
+  create,
   changes,
   resolve,
   list,
@@ -36,6 +37,7 @@ router.put('/sync', agentRateLimit, requireScope(AGENT_SCOPES.WRITE), sync);
 router.get('/changes', agentRateLimit, requireScope(AGENT_SCOPES.READ), changes);
 router.post('/sync-now', syncNowRateLimit, syncNow);
 router.get('/', list);
+router.post('/', create);
 router.get('/:id', getOne);
 router.put('/:id', update);
 router.post('/:id/resolve', resolve);
