@@ -2,11 +2,23 @@
 
 const { syncSchema } = require('../schemas/notes/sync');
 const { updateSchema } = require('../schemas/notes/update');
+const { changesQuerySchema } = require('../schemas/notes/changes');
+const { resolveSchema } = require('../schemas/notes/resolve');
 const notesModel = require('../models/notes.model');
 const { success, error, validationError, conflict } = require('../utils/response');
-const { logSecurityEvent, SEVERITY, EVENTS } = require('../utils/securityLog');
+const {
+  logSecurityEvent,
+  logSecurityEventOncePerWindow,
+  SEVERITY,
+  EVENTS,
+} = require('../utils/securityLog');
 const { runSyncForUser } = require('../workers/syncWorker');
-const { MAX_NOTES_PER_USER } = require('../config');
+const {
+  MAX_NOTES_PER_USER,
+  NOTES_CHANGES_LIMIT,
+  BULK_READ_THRESHOLD,
+  BULK_READ_WINDOW_MS,
+} = require('../config');
 
 // PUT /api/notes/sync — exclusivo del agente. Upsert por vault_path, nunca
 // compara version (ver "Resolución de conflictos" en la documentación).
@@ -39,16 +51,108 @@ const sync = async (req, res) => {
     }
   }
 
-  // changed = false cuando el contenido era idéntico al guardado: la nota no
-  // se reencoló. Se responde 200 igual, porque desde el punto de vista del
-  // agente el reporte se aceptó; el flag va en el payload solo para que pueda
-  // registrarlo en su log.
-  const { note, changed } = await notesModel.upsertFromAgent(
+  const { outcome, note } = await notesModel.syncFromAgent(
     req.auth.userId,
     parsed.data.vault_path,
     parsed.data.content,
+    parsed.data.base_version ?? null,
   );
-  success(res, { ...note, changed });
+
+  // La nota existe pero el agente no dijo de qué versión partía: perdió su
+  // índice. Sobrescribir aquí sería subir una copia vieja del disco encima de
+  // ediciones más nuevas, en silencio. Tiene que reconciliar primero.
+  if (outcome === 'resync') {
+    return conflict(
+      res,
+      null,
+      { version: note.version },
+      'resync_required',
+      'Este equipo perdió su estado de sincronización. Reconcilia antes de subir.',
+    );
+  }
+
+  if (outcome === 'conflict') {
+    return conflict(
+      res,
+      { content: note.conflict_content, version: null },
+      { content: note.content, version: note.version },
+    );
+  }
+
+  // 'unchanged' significa que el contenido era idéntico al guardado y no se
+  // reencoló nada. Se responde 200 igual: desde el punto de vista del agente
+  // el reporte se aceptó. El flag va en el payload para su log.
+  success(res, { ...note, changed: outcome !== 'unchanged', outcome });
+};
+
+// GET /api/notes/changes — exclusivo del agente, con alcance notes:read.
+// Es la mitad de bajada de la sincronización: el servidor no puede empujar
+// porque el agente está detrás del NAT del usuario, así que el agente pregunta.
+const changes = async (req, res) => {
+  if (req.auth.type !== 'agent') {
+    return error(res, 'Este endpoint es exclusivo del agente.', 403);
+  }
+
+  const parsed = changesQuerySchema.safeParse(req.query);
+  if (!parsed.success) {
+    return validationError(res, parsed.error);
+  }
+
+  const { since, since_id: sinceId } = parsed.data;
+  const cursor = since ? { since, sinceId } : null;
+  const notes = await notesModel.findChangedSince(req.auth.userId, cursor, NOTES_CHANGES_LIMIT);
+
+  // Un agente al día pide unas pocas notas; alguien llevándose todo pide
+  // tandas grandes. Un evento por ventana, no por petición: si fuera por
+  // petición, exfiltrar 2000 notas produciría diez líneas idénticas.
+  if (notes.length >= BULK_READ_THRESHOLD) {
+    logSecurityEventOncePerWindow({
+      key: `bulk_read:${req.auth.jti}`,
+      windowMs: BULK_READ_WINDOW_MS,
+      type: EVENTS.NOTES_BULK_READ,
+      severity: SEVERITY.WARN,
+      userId: req.auth.userId,
+      req,
+      details: { notes: notes.length, since: since || 'desde el principio' },
+    });
+  }
+
+  const ultima = notes[notes.length - 1];
+  success(res, {
+    // cursor_at es de uso interno del cursor; el agente no lo necesita por nota.
+    notes: notes.map(({ cursor_at, ...nota }) => nota),
+    // El cursor sale del servidor y no del reloj del agente: es el único que no
+    // sufre desfases entre máquinas.
+    cursor: ultima ? { since: ultima.cursor_at, since_id: String(ultima.id) } : null,
+    has_more: notes.length === NOTES_CHANGES_LIMIT,
+  });
+};
+
+// POST /api/notes/:id/resolve — exclusivo de la web. El agente nunca resuelve
+// un conflicto: corre en segundo plano sin nadie mirando.
+const resolve = async (req, res) => {
+  if (req.auth.type !== 'user') {
+    return error(res, 'Este endpoint es exclusivo de la sesión web.', 403);
+  }
+  if (!/^\d+$/.test(req.params.id)) {
+    return error(res, 'id inválido.', 400);
+  }
+
+  const parsed = resolveSchema.safeParse(req.body);
+  if (!parsed.success) {
+    return validationError(res, parsed.error);
+  }
+
+  const resuelta =
+    parsed.data.keep === 'local'
+      ? await notesModel.resolveKeepLocal(req.params.id, req.auth.userId)
+      : await notesModel.resolveKeepServer(req.params.id, req.auth.userId);
+
+  if (!resuelta) {
+    return error(res, 'Esa nota no existe o ya no está en conflicto.', 404);
+  }
+
+  success(res, resuelta);
 };
 
 // GET /api/notes — exclusivo de la web.
@@ -91,6 +195,16 @@ const update = async (req, res) => {
     return validationError(res, parsed.error);
   }
 
+  // Guardar sobre una nota en conflicto crearía un tercer estado, y el usuario
+  // perdería de vista que hay una decisión pendiente. Primero se resuelve.
+  const actual = await notesModel.findByIdForUser(req.params.id, req.auth.userId);
+  if (!actual) {
+    return error(res, 'Nota no encontrada.', 404);
+  }
+  if (actual.conflict_content !== null) {
+    return error(res, 'Esta nota tiene un conflicto sin resolver. Resuélvelo antes de editarla.', 409);
+  }
+
   const updated = await notesModel.updateWithVersionCheck(
     req.params.id,
     req.auth.userId,
@@ -125,4 +239,4 @@ const syncNow = async (req, res) => {
   success(res, { synced: result });
 };
 
-module.exports = { sync, syncNow, list, getOne, update };
+module.exports = { sync, syncNow, changes, resolve, list, getOne, update };

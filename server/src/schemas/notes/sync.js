@@ -24,6 +24,16 @@ const syncSchema = z.object({
       error: (issue) => (issue.input === undefined ? 'content es requerido.' : 'content debe ser texto.'),
     })
     .refine(withinByteLimit, byteLimitMessage),
+  // La versión de la que partió el agente, según su índice local. Opcional
+  // porque una nota nueva no tiene ninguna; pero si la nota YA existe y no
+  // llega, el servidor se niega a sobrescribir y pide reconciliar. Sin esa
+  // regla, un agente reinstalado subiría su copia vieja del disco encima de
+  // ediciones más nuevas, en silencio.
+  base_version: z
+    .number({ error: () => 'base_version debe ser un número.' })
+    .int('base_version debe ser un entero.')
+    .positive('base_version debe ser mayor a cero.')
+    .optional(),
 });
 
 module.exports = { syncSchema, withinByteLimit, byteLimitMessage };

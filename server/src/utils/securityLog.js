@@ -41,6 +41,9 @@ const EVENTS = {
   TOKEN_USED_AFTER_REVOKE: 'token.used_after_revoke',
   RATELIMIT_EXCEEDED: 'ratelimit.exceeded',
   QUOTA_EXCEEDED: 'quota.exceeded',
+  // Alguien pidió una tanda grande de notas de golpe. Un agente al día pide
+  // unas pocas; esto es el patrón de quien se lleva todo.
+  NOTES_BULK_READ: 'notes.bulk_read',
   PAIRING_REQUESTED: 'pairing.requested',
   PAIRING_APPROVED: 'pairing.approved',
   PAIRING_CONSUMED: 'pairing.consumed',
@@ -97,4 +100,37 @@ const logSecurityEvent = ({
     });
 };
 
-module.exports = { logSecurityEvent, SEVERITY, EVENTS, LOG_CHANNEL };
+// Variante que emite como mucho un evento por ventana y por clave.
+//
+// Es la misma regla que aplica el rate limiting y la razón es la misma:
+// Guardian lee este feed y cada línea le cuesta tokens. Un abuso sostenido
+// tiene que producir una línea con el conteo dentro, no una por petición.
+//
+// Se expone aquí en vez de repetir un Map en cada sitio que lo necesite.
+const VENTANAS_PRUNE_MS = 10 * 60 * 1000;
+const ultimaEmision = new Map();
+
+setInterval(() => {
+  const ahora = Date.now();
+  for (const [clave, cuando] of ultimaEmision) {
+    // Una hora de gracia sobre la ventana más larga que se use.
+    if (ahora - cuando > 2 * 60 * 60 * 1000) ultimaEmision.delete(clave);
+  }
+}, VENTANAS_PRUNE_MS).unref();
+
+const logSecurityEventOncePerWindow = ({ key, windowMs, ...evento }) => {
+  const ahora = Date.now();
+  const anterior = ultimaEmision.get(key) || 0;
+  if (ahora - anterior < windowMs) return null;
+
+  ultimaEmision.set(key, ahora);
+  return logSecurityEvent(evento);
+};
+
+module.exports = {
+  logSecurityEvent,
+  logSecurityEventOncePerWindow,
+  SEVERITY,
+  EVENTS,
+  LOG_CHANNEL,
+};

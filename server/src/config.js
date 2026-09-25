@@ -29,6 +29,20 @@ module.exports = {
   // Lo que no entra se queda pendiente para el ciclo siguiente.
   MAX_BATCH_BYTES: 20 * 1024 * 1024, // 20 MiB
 
+  // Notas que devuelve como mucho una consulta a /api/notes/changes. Acota la
+  // memoria de la respuesta: con 2000 notas y 1 MiB cada una, devolverlas todas
+  // de golpe sería insostenible. El agente pagina con el cursor.
+  NOTES_CHANGES_LIMIT: 200,
+
+  // A partir de cuántas notas en una sola respuesta se considera una lectura
+  // masiva y se reporta al feed de seguridad. Un agente al día pide unas pocas;
+  // alguien exfiltrando pide todo.
+  BULK_READ_THRESHOLD: 100,
+
+  // Una lectura masiva sostenida debe producir UN evento por ventana, no uno
+  // por petición: Guardian lee el feed y cada línea le cuesta tokens.
+  BULK_READ_WINDOW_MS: 60 * 60 * 1000,
+
   // Notas totales por usuario. Un vault normal ronda las cientos; 2000 deja
   // margen de sobra y ataja un agente en bucle o un vault clonado por error.
   MAX_NOTES_PER_USER: 2000,

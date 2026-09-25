@@ -8,48 +8,165 @@ const hashContent = (content) => crypto.createHash('sha256').update(content).dig
 
 const NOTE_COLUMNS = 'id, vault_path, content, content_hash, version, sync_status, updated_at';
 
+// Añade el estado de conflicto. Va aparte porque no todas las consultas lo
+// necesitan: la lista del panel solo quiere saber si hay conflicto, no
+// arrastrar una segunda copia del contenido.
+const NOTE_COLUMNS_CON_CONFLICTO = `${NOTE_COLUMNS}, conflict_content, conflict_hash, conflict_detected_at`;
+
 const findByVaultPath = async (userId, vaultPath) => {
   const result = await pool.query(
-    `SELECT ${NOTE_COLUMNS} FROM notes WHERE user_id = $1 AND vault_path = $2`,
+    `SELECT ${NOTE_COLUMNS_CON_CONFLICTO} FROM notes WHERE user_id = $1 AND vault_path = $2`,
     [userId, vaultPath],
   );
   return result.rows[0] || null;
 };
 
-// Upsert por (user_id, vault_path): el agente nunca conoce el id de la nota,
-// solo la ruta del archivo. Nunca compara version, siempre sobreescribe.
+// El agente identifica las notas por ruta, no por id: nunca conoce el id.
 //
-// El hash lo calcula SIEMPRE el servidor, nunca se confía en uno que venga
-// del agente. Si el contenido entrante es idéntico al guardado, el DO UPDATE
-// no toca la fila: ni sube version, ni reencola, ni mueve updated_at. Sin
-// eso, cada arranque del agente re-subiría el vault completo, porque chokidar
-// emite un evento por cada archivo que encuentra aunque nada haya cambiado.
+// El hash lo calcula SIEMPRE el servidor, nunca se confía en uno que venga del
+// agente.
 //
-// Devuelve { note, changed }: changed dice si la fila se escribió de verdad.
-const upsertFromAgent = async (userId, vaultPath, content) => {
+// Devuelve { outcome, note }, con outcome en:
+//   'created'    la ruta no existía
+//   'unchanged'  el contenido es idéntico al guardado; no se toca nada
+//   'updated'    el agente partía de la versión actual: sobrescribe
+//   'conflict'   cambiaron los dos lados; se guarda la versión local aparte
+//   'resync'     la nota existe pero el agente no dijo de qué versión partía
+const syncFromAgent = async (userId, vaultPath, content, baseVersion) => {
   const contentHash = hashContent(content);
-  const result = await pool.query(
-    `INSERT INTO notes (user_id, vault_path, content, content_hash, version, sync_status, updated_at)
-     VALUES ($1, $2, $3, $4, 1, 'pending', now())
-     ON CONFLICT (user_id, vault_path)
-     DO UPDATE SET
-       content = EXCLUDED.content,
-       content_hash = EXCLUDED.content_hash,
-       version = notes.version + 1,
-       sync_status = 'pending',
-       updated_at = now()
-     WHERE notes.content_hash IS DISTINCT FROM EXCLUDED.content_hash
-     RETURNING ${NOTE_COLUMNS}`,
-    [userId, vaultPath, content, contentHash],
-  );
+  const existente = await findByVaultPath(userId, vaultPath);
 
-  if (result.rows[0]) {
-    return { note: result.rows[0], changed: true };
+  if (!existente) {
+    const creada = await pool.query(
+      `INSERT INTO notes (user_id, vault_path, content, content_hash, version, sync_status, updated_at)
+       VALUES ($1, $2, $3, $4, 1, 'pending', now())
+       ON CONFLICT (user_id, vault_path) DO NOTHING
+       RETURNING ${NOTE_COLUMNS_CON_CONFLICTO}`,
+      [userId, vaultPath, content, contentHash],
+    );
+    // Sin filas = otra petición creó la misma ruta entre el SELECT y el
+    // INSERT. Se reintenta por el camino normal, que ahora sí la encontrará.
+    if (creada.rows[0]) return { outcome: 'created', note: creada.rows[0] };
+    return syncFromAgent(userId, vaultPath, content, baseVersion);
   }
 
-  // Sin filas devueltas = el WHERE del DO UPDATE bloqueó la escritura porque
-  // el contenido no cambió. La nota existe, solo hay que leerla tal cual está.
-  return { note: await findByVaultPath(userId, vaultPath), changed: false };
+  // El disco ya coincide con el servidor. Si había un conflicto pendiente, la
+  // divergencia se resolvió sola y hay que limpiarlo: dejarlo marcado pediría
+  // al usuario decidir entre dos versiones idénticas.
+  if (existente.content_hash === contentHash) {
+    if (existente.conflict_content !== null) {
+      return { outcome: 'unchanged', note: await clearConflict(existente.id, userId) };
+    }
+    return { outcome: 'unchanged', note: existente };
+  }
+
+  // Un agente sin índice no sabe de qué versión partía. Sobrescribir aquí es
+  // justamente el escenario de pérdida de datos que este diseño evita: un
+  // agente reinstalado subiría su copia vieja encima de ediciones más nuevas.
+  // Tiene que reconciliar primero (ver el agente).
+  if (baseVersion === null || baseVersion === undefined) {
+    return { outcome: 'resync', note: existente };
+  }
+
+  // Compare-and-swap: el WHERE sobre version hace la comprobación atómica, así
+  // que dos peticiones simultáneas no pueden pisarse.
+  const actualizada = await pool.query(
+    `UPDATE notes
+     SET content = $1, content_hash = $2, version = version + 1,
+         sync_status = 'pending', updated_at = now(),
+         conflict_content = NULL, conflict_hash = NULL, conflict_detected_at = NULL
+     WHERE id = $3 AND user_id = $4 AND version = $5
+     RETURNING ${NOTE_COLUMNS_CON_CONFLICTO}`,
+    [content, contentHash, existente.id, userId, baseVersion],
+  );
+  if (actualizada.rows[0]) return { outcome: 'updated', note: actualizada.rows[0] };
+
+  // La version no coincide: el servidor cambió desde que el agente sincronizó
+  // por última vez, y el disco también. Nadie pisa a nadie.
+  return { outcome: 'conflict', note: await markConflict(existente.id, userId, content, contentHash) };
+};
+
+// Guarda la versión local sin tocar `content` ni `version`. Si ya había un
+// conflicto, se actualiza para que refleje lo último del disco.
+const markConflict = async (id, userId, content, contentHash) => {
+  const result = await pool.query(
+    `UPDATE notes
+     SET conflict_content = $1, conflict_hash = $2, conflict_detected_at = now()
+     WHERE id = $3 AND user_id = $4
+     RETURNING ${NOTE_COLUMNS_CON_CONFLICTO}`,
+    [content, contentHash, id, userId],
+  );
+  return result.rows[0] || null;
+};
+
+const clearConflict = async (id, userId) => {
+  const result = await pool.query(
+    `UPDATE notes
+     SET conflict_content = NULL, conflict_hash = NULL, conflict_detected_at = NULL
+     WHERE id = $1 AND user_id = $2
+     RETURNING ${NOTE_COLUMNS_CON_CONFLICTO}`,
+    [id, userId],
+  );
+  return result.rows[0] || null;
+};
+
+// Bajada: lo que el agente tiene que traerse a su disco.
+//
+// Se pagina por (updated_at, id) y no solo por updated_at: dos notas escritas
+// en la misma transacción comparten timestamp, y con un cursor de un solo
+// campo el LIMIT podría dejar una fuera para siempre. La comparación de tuplas
+// de Postgres lo resuelve sin trucos.
+//
+// Excluye las notas en conflicto: no hay nada que entregar hasta que alguien
+// decida cuál versión gana.
+// `cursor_at` va como TEXTO y no como el `updated_at` normal por una razón que
+// cuesta descubrir: Postgres guarda timestamptz con precisión de microsegundos,
+// pero el driver lo convierte a un Date de JavaScript, que solo llega a
+// milisegundos. Un cursor redondeado a milisegundos es MENOR que el valor real
+// guardado, así que la última fila de cada página volvería a salir en la
+// siguiente: el agente se quedaría en un bucle trayendo siempre la misma nota.
+const findChangedSince = async (userId, cursor, limit) => {
+  const result = await pool.query(
+    `SELECT ${NOTE_COLUMNS}, updated_at::text AS cursor_at
+     FROM notes
+     WHERE user_id = $1
+       AND conflict_content IS NULL
+       AND ($2::text IS NULL OR (updated_at, id) > ($2::timestamptz, $3::bigint))
+     ORDER BY updated_at ASC, id ASC
+     LIMIT $4`,
+    [userId, cursor?.since ?? null, cursor?.sinceId ?? 0, limit],
+  );
+  return result.rows;
+};
+
+// Resolución desde el panel: el humano eligió la versión del servidor. Se
+// descarta la local y la nota vuelve a su estado normal.
+const resolveKeepServer = async (id, userId) => {
+  const result = await pool.query(
+    `UPDATE notes
+     SET conflict_content = NULL, conflict_hash = NULL, conflict_detected_at = NULL,
+         updated_at = now()
+     WHERE id = $1 AND user_id = $2 AND conflict_content IS NOT NULL
+     RETURNING ${NOTE_COLUMNS_CON_CONFLICTO}`,
+    [id, userId],
+  );
+  return result.rows[0] || null;
+};
+
+// El humano eligió su versión local: pasa a ser la del servidor, sube version y
+// se reencola para GitHub. En los dos casos se mueve updated_at, así que el
+// agente baja la ganadora en su siguiente consulta.
+const resolveKeepLocal = async (id, userId) => {
+  const result = await pool.query(
+    `UPDATE notes
+     SET content = conflict_content, content_hash = conflict_hash,
+         version = version + 1, sync_status = 'pending', updated_at = now(),
+         conflict_content = NULL, conflict_hash = NULL, conflict_detected_at = NULL
+     WHERE id = $1 AND user_id = $2 AND conflict_content IS NOT NULL
+     RETURNING ${NOTE_COLUMNS_CON_CONFLICTO}`,
+    [id, userId],
+  );
+  return result.rows[0] || null;
 };
 
 // Para la cuota de notas por usuario. Solo se llama cuando llega una ruta
@@ -61,7 +178,10 @@ const countByUser = async (userId) => {
 
 const findAllByUser = async (userId) => {
   const result = await pool.query(
-    `SELECT id, vault_path, version, sync_status, updated_at
+    // in_conflict como booleano derivado: la lista puede resaltar las notas que
+    // necesitan atención sin arrastrar una segunda copia del contenido.
+    `SELECT id, vault_path, version, sync_status, updated_at,
+            (conflict_content IS NOT NULL) AS in_conflict
      FROM notes
      WHERE user_id = $1
      ORDER BY updated_at DESC`,
@@ -72,7 +192,8 @@ const findAllByUser = async (userId) => {
 
 const findByIdForUser = async (id, userId) => {
   const result = await pool.query(
-    `SELECT ${NOTE_COLUMNS}
+    // Con el conflicto: el editor necesita las dos versiones para mostrarlas.
+    `SELECT ${NOTE_COLUMNS_CON_CONFLICTO}
      FROM notes
      WHERE id = $1 AND user_id = $2`,
     [id, userId],
@@ -150,7 +271,10 @@ const markSynced = async (notes) => {
 };
 
 module.exports = {
-  upsertFromAgent,
+  syncFromAgent,
+  findChangedSince,
+  resolveKeepServer,
+  resolveKeepLocal,
   countByUser,
   findAllByUser,
   findByIdForUser,

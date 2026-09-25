@@ -22,12 +22,18 @@ const validationError = (res, zodError) => {
 };
 
 // yours: lo que mandó el cliente. server: el estado actual en Postgres.
-// Usado solo por notes.update cuando la version no coincide.
-const conflict = (res, yours, server) => {
+//
+// `reason` distingue los dos 409 que puede recibir el agente, que necesitan
+// reacciones distintas: ante `version_mismatch` congela esa nota y espera a que
+// un humano resuelva desde el panel; ante `resync_required` tiene que
+// reconciliar su estado local antes de volver a subir nada.
+const conflict = (res, yours, server, reason = 'version_mismatch', message = null) => {
   res.status(409).json({
     success: false,
-    error: { message: 'La nota fue modificada por otra fuente. Revisa ambas versiones.' },
-    conflict: { yours, server },
+    error: {
+      message: message || 'La nota fue modificada por otra fuente. Revisa ambas versiones.',
+    },
+    conflict: { reason, yours, server },
   });
 };
 
