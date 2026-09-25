@@ -119,7 +119,7 @@ const findAllPending = async (userId = null, perUserLimit = SYNC_NOTES_PER_USER)
        ) ranked
        WHERE rn <= $2
      )
-     SELECT n.id, n.user_id, n.vault_path, n.content, n.version, u.email
+     SELECT n.id, n.user_id, n.vault_path, n.content, n.version, u.email, u.notify_enabled
      FROM notes n
      JOIN users u ON u.id = n.user_id
      WHERE n.id IN (SELECT id FROM seleccionadas)

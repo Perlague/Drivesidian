@@ -4,9 +4,29 @@ const notesModel = require('../models/notes.model');
 const { putBatch } = require('../utils/github');
 const { buildRepoPath, buildUserFolder } = require('../utils/repoPath');
 const { notify } = require('../utils/ntfy');
+const { topicForUser } = require('../utils/ntfyTopic');
 const { MAX_BATCH_BYTES } = require('../config');
 
 const DEFAULT_INTERVAL_MS = 5 * 60 * 1000; // 5 minutos
+
+// Candado GLOBAL, no por usuario. El repo es compartido, así que todos los
+// lotes commitean contra la misma rama: dos subidas simultáneas se pelean por
+// el ref y la segunda recibe el 422 de "not a fast forward". Un escritor a la
+// vez. Basta un booleano porque Node es de un solo hilo: entre el chequeo y la
+// asignación no hay await, así que no hay carrera posible.
+let syncing = false;
+
+const withGlobalSyncLock = async (fn) => {
+  if (syncing) return { busy: true, result: null };
+  syncing = true;
+  try {
+    return { busy: false, result: await fn() };
+  } finally {
+    syncing = false;
+  }
+};
+
+const isSyncing = () => syncing;
 
 const groupByUser = (notes) => {
   const groups = new Map();
@@ -38,59 +58,86 @@ const takeWithinByteBudget = (notes) => {
   return { included, bytes };
 };
 
-// Un solo commit por lote de usuario (Git Data API), y una sola notificación
-// por ese lote, nunca por nota individual.
-const runSyncCycle = async () => {
-  const pending = await notesModel.findAllPending();
-  if (pending.length === 0) return;
+// Sube el lote de UN usuario en un solo commit y lo cierra. Asume que quien la
+// llama ya tiene el candado global. Devuelve cuántas notas quedaron synced.
+const syncUserBatch = async (userId, pendingForUser) => {
+  const folder = buildUserFolder(userId, pendingForUser[0].email);
+  const { included: notes, bytes } = takeWithinByteBudget(pendingForUser);
 
-  const groups = groupByUser(pending);
+  if (notes.length < pendingForUser.length) {
+    const mib = (bytes / 1024 / 1024).toFixed(1);
+    console.log(
+      `[syncWorker] lote de ${folder} recortado a ${notes.length}/${pendingForUser.length} nota(s) (${mib} MiB); el resto va en el siguiente ciclo`,
+    );
+  }
 
-  for (const [userId, pendingForUser] of groups) {
-    const folder = buildUserFolder(userId, pendingForUser[0].email);
-    const { included: notes, bytes } = takeWithinByteBudget(pendingForUser);
-    if (notes.length < pendingForUser.length) {
-      const mib = (bytes / 1024 / 1024).toFixed(1);
-      console.log(
-        `[syncWorker] lote de ${folder} recortado a ${notes.length}/${pendingForUser.length} nota(s) (${mib} MiB); el resto va en el siguiente ciclo`,
-      );
-    }
+  // El repo es compartido: cada usuario escribe bajo su propia carpeta, así que
+  // dos notas con el mismo vault_path no se pisan entre cuentas.
+  const files = notes.map((note) => ({
+    path: buildRepoPath(userId, note.email, note.vault_path),
+    content: note.content,
+  }));
 
-    // El repo es compartido: cada usuario escribe bajo su propia carpeta,
-    // así que dos notas con el mismo vault_path no se pisan entre cuentas.
-    const files = notes.map((note) => ({
-      path: buildRepoPath(userId, note.email, note.vault_path),
-      content: note.content,
-    }));
+  // El lote es todo o nada: si el commit falla, ninguna nota se marca y todas
+  // entran de nuevo en el siguiente ciclo.
+  try {
+    await putBatch(files, `Sync: ${files.length} nota(s) de ${folder}`);
+  } catch (err) {
+    console.error(`[syncWorker] fallo subiendo el lote de ${folder}:`, err.message);
+    return 0;
+  }
 
-    // El lote es todo o nada: si el commit falla, ninguna nota se marca y
-    // todas entran de nuevo en el siguiente ciclo.
+  // Solo se cierran las notas que no cambiaron mientras subíamos: si el agente
+  // mandó una edición a media subida, esa nota sigue pendiente y se vuelve a
+  // subir en el próximo ciclo con su contenido nuevo.
+  const syncedCount = await notesModel.markSynced(notes);
+  const reopened = notes.length - syncedCount;
+  if (reopened > 0) {
+    console.log(
+      `[syncWorker] ${reopened} nota(s) de ${folder} se editaron durante la subida y siguen pendientes.`,
+    );
+  }
+  if (syncedCount === 0) return 0;
+
+  // Una sola notificación por lote, nunca por nota, y solo si el usuario la
+  // quiere. Las notas quedan synced notifique o no.
+  if (pendingForUser[0].notify_enabled) {
     try {
-      await putBatch(files, `Sync: ${files.length} nota(s) de ${folder}`);
-    } catch (err) {
-      console.error(`[syncWorker] fallo subiendo el lote de ${folder}:`, err.message);
-      continue;
-    }
-
-    // Solo se cierran las notas que no cambiaron mientras subíamos: si el
-    // agente mandó una edición a media subida, esa nota sigue pendiente y se
-    // vuelve a subir en el próximo ciclo con su contenido nuevo.
-    const syncedCount = await notesModel.markSynced(notes);
-    const reopened = notes.length - syncedCount;
-    if (reopened > 0) {
-      console.log(
-        `[syncWorker] ${reopened} nota(s) de ${folder} se editaron durante la subida y siguen pendientes.`,
-      );
-    }
-    if (syncedCount === 0) continue;
-
-    try {
-      await notify(`Drivesidian: ${syncedCount} nota(s) sincronizada(s).`);
+      await notify(topicForUser(userId), `Drivesidian: ${syncedCount} nota(s) sincronizada(s).`);
     } catch (err) {
       console.error('[syncWorker] fallo notificando a ntfy:', err.message);
     }
   }
+
+  return syncedCount;
 };
+
+// Ciclo periódico: recorre a todos los usuarios con notas pendientes.
+const runSyncCycle = async () => {
+  const { busy } = await withGlobalSyncLock(async () => {
+    const pending = await notesModel.findAllPending();
+    if (pending.length === 0) return 0;
+
+    let total = 0;
+    for (const [userId, notes] of groupByUser(pending)) {
+      total += await syncUserBatch(userId, notes);
+    }
+    return total;
+  });
+
+  if (busy) {
+    console.log('[syncWorker] ciclo omitido: ya hay una sincronización en curso');
+  }
+};
+
+// Sincronización bajo demanda de un solo usuario, desde el panel web.
+// Devuelve { busy } si otro lote tiene el candado, para responder 409.
+const runSyncForUser = async (userId) =>
+  withGlobalSyncLock(async () => {
+    const pending = await notesModel.findAllPending(userId);
+    if (pending.length === 0) return 0;
+    return syncUserBatch(userId, pending);
+  });
 
 const startSyncWorker = () => {
   const intervalMs = Number(process.env.SYNC_INTERVAL_MS) || DEFAULT_INTERVAL_MS;
@@ -100,4 +147,10 @@ const startSyncWorker = () => {
   console.log(`[syncWorker] worker de sincronización iniciado (cada ${intervalMs}ms)`);
 };
 
-module.exports = { startSyncWorker, runSyncCycle, takeWithinByteBudget };
+module.exports = {
+  startSyncWorker,
+  runSyncCycle,
+  runSyncForUser,
+  isSyncing,
+  takeWithinByteBudget,
+};

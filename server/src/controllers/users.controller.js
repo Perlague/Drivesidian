@@ -4,10 +4,12 @@ const qrcode = require('qrcode');
 const { loginSchema } = require('../schemas/users/login');
 const { registerSchema } = require('../schemas/users/register');
 const { confirm2faSchema } = require('../schemas/users/confirm2fa');
+const { notificationsSchema } = require('../schemas/users/notifications');
 const {
   findByEmail,
   findById,
   create,
+  updateNotifyPreference,
   saveTotpSecret,
   incrementFailedAttempts,
   resetFailedAttempts,
@@ -18,6 +20,7 @@ const { encryptSecret, decryptSecret } = require('../utils/secretCrypto');
 const { sign } = require('../utils/jwt');
 const { success, error, validationError } = require('../utils/response');
 const { logSecurityEvent, SEVERITY, EVENTS } = require('../utils/securityLog');
+const { topicForUser, topicUrl } = require('../utils/ntfyTopic');
 const { SESSION_COOKIE_NAME, SESSION_TTL_SECONDS } = require('../config');
 
 const register = async (req, res) => {
@@ -152,12 +155,39 @@ const login = async (req, res) => {
   success(res, { id: user.id, email: user.email, role: user.role });
 };
 
+const logout = async (req, res) => {
+  res.clearCookie(SESSION_COOKIE_NAME, {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === 'production',
+    sameSite: 'lax',
+  });
+  logSecurityEvent({ type: EVENTS.AUTH_LOGOUT, userId: req.auth.userId, req });
+  success(res, { message: 'Sesión cerrada.' });
+};
+
 const me = async (req, res) => {
   const user = await findById(req.auth.userId);
   if (!user) {
     return error(res, 'Usuario no encontrado.', 404);
   }
-  success(res, user);
+  // El topic no está en la base: se deriva del id. El panel lo necesita para
+  // dibujar el QR de suscripción.
+  success(res, { ...user, ntfy_topic: topicForUser(user.id), ntfy_url: topicUrl(user.id) });
+};
+
+// PATCH /api/users/me/notifications — el interruptor vive en el panel web; el
+// agente no participa de esta decisión.
+const updateNotifications = async (req, res) => {
+  const parsed = notificationsSchema.safeParse(req.body);
+  if (!parsed.success) {
+    return validationError(res, parsed.error);
+  }
+
+  const updated = await updateNotifyPreference(req.auth.userId, parsed.data.notify_enabled);
+  if (!updated) {
+    return error(res, 'Usuario no encontrado.', 404);
+  }
+  success(res, updated);
 };
 
 // POST /api/users/2fa/enroll — genera el secreto pero NO lo guarda todavía.
@@ -190,4 +220,4 @@ const confirm2fa = async (req, res) => {
   success(res, { message: '2FA habilitado correctamente.' });
 };
 
-module.exports = { register, login, me, enroll2fa, confirm2fa };
+module.exports = { register, login, logout, me, updateNotifications, enroll2fa, confirm2fa };

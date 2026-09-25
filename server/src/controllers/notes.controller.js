@@ -5,6 +5,7 @@ const { updateSchema } = require('../schemas/notes/update');
 const notesModel = require('../models/notes.model');
 const { success, error, validationError, conflict } = require('../utils/response');
 const { logSecurityEvent, SEVERITY, EVENTS } = require('../utils/securityLog');
+const { runSyncForUser } = require('../workers/syncWorker');
 const { MAX_NOTES_PER_USER } = require('../config');
 
 // PUT /api/notes/sync — exclusivo del agente. Upsert por vault_path, nunca
@@ -107,4 +108,21 @@ const update = async (req, res) => {
   conflict(res, { content: parsed.data.content, version: parsed.data.version }, current);
 };
 
-module.exports = { sync, list, getOne, update };
+// POST /api/notes/sync-now — exclusivo de la web. Dispara el ciclo del worker
+// para este usuario sin esperar al intervalo.
+const syncNow = async (req, res) => {
+  if (req.auth.type !== 'user') {
+    return error(res, 'Este endpoint es exclusivo de la sesión web.', 403);
+  }
+
+  const { busy, result } = await runSyncForUser(req.auth.userId);
+  if (busy) {
+    // El repo es compartido y todos los lotes commitean contra la misma rama,
+    // así que solo puede haber un escritor a la vez.
+    return error(res, 'Ya hay una sincronización en curso. Intenta en un momento.', 409);
+  }
+
+  success(res, { synced: result });
+};
+
+module.exports = { sync, syncNow, list, getOne, update };

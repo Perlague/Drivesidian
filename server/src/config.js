@@ -41,4 +41,8 @@ module.exports = {
 
   // Rate limit por IP del login, que es donde se verifica el código TOTP.
   LOGIN_RATE_LIMIT: { windowMs: 60 * 1000, max: 10 },
+
+  // "Sincronizar ahora" del panel: cada pulsación habla con la API de GitHub,
+  // así que se limita por usuario para que nadie la use de ariete.
+  SYNC_NOW_RATE_LIMIT: { windowMs: 60 * 1000, max: 5 },
 };
