@@ -2,6 +2,7 @@
 
 const log = require('./log');
 const config = require('./config');
+const secureStore = require('./secureStore');
 const { vincular } = require('./pairing');
 const { detectarVaults, asegurarCarpetaSincronizada } = require('./vaultDetect');
 const { ColaDeSync } = require('./api');
@@ -12,8 +13,16 @@ let watcher = null;
 const arrancar = async () => {
   log.info('Drivesidian — agente local');
 
-  let { apiUrl, agentToken, vaultPath } = config.cargar();
+  let { apiUrl, agentToken, vaultPath, tokenEnClaro } = config.cargar();
   log.info(`Servidor: ${apiUrl}`);
+
+  // Un agente instalado antes de que existiera el cifrado tiene su acceso en
+  // texto plano. Se migra solo, sin que el usuario tenga que hacer nada.
+  if (agentToken && tokenEnClaro && secureStore.disponible()) {
+    if (config.cifrarTokenExistente(agentToken)) {
+      log.info('El acceso de este equipo se cifró en disco.');
+    }
+  }
 
   // Sin token, lo primero es vincular el equipo. El instalador no pide nada:
   // todo se resuelve aquí, abriendo el navegador.

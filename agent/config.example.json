@@ -1,6 +1,7 @@
 {
   "_comentario": "El agente escribe este archivo solo al vincularse; no hace falta crearlo a mano. Vive en %APPDATA%\\Drivesidian\\config.json (Windows) o ~/.config/drivesidian/config.json.",
+  "_sobre_el_acceso": "El acceso del agente NO se guarda en texto plano: va en agentTokenEnc, cifrado con DPAPI. La llave la deriva Windows de las credenciales de la cuenta, así que una copia de este archivo en otra máquina o en un respaldo es inútil. Fuera de Windows no hay equivalente y se guarda en claro, con un aviso en el log.",
   "apiUrl": "https://drivesidian.ejemplo.com",
-  "agentToken": "se-rellena-al-vincular-el-equipo",
+  "agentTokenEnc": "AQAAANCMnd8BFdERjHoAwE/Cl+sBAAAA… (se rellena al vincular)",
   "vaultPath": "C:\\Users\\tu-usuario\\TuVault"
 }
