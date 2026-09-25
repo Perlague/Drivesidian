@@ -6,6 +6,10 @@ const bloque = document.getElementById('enrolamiento');
 const form = document.getElementById('form-confirmar');
 const botonConfirmar = document.getElementById('btn-confirmar');
 
+// El servidor lo pasa como atributo data-* del <body>, no como script en
+// línea: así la CSP no necesita 'unsafe-inline' en script-src.
+const siguiente = document.body.dataset.siguiente;
+
 // El secreto se genera aquí y NO se guarda todavía: el servidor solo lo
 // persiste (cifrado) cuando /2fa/confirm valida un código correcto. Así una
 // cuenta nunca queda con 2FA "a medias" si el usuario cierra la pestaña.
@@ -47,7 +51,7 @@ form.addEventListener('submit', async (evento) => {
 
   mostrarAviso(aviso, 'Listo, tu cuenta ya pide un segundo factor.', 'exito');
   setTimeout(() => {
-    window.location.href = window.SIGUIENTE || '/dashboard';
+    window.location.href = siguiente || '/dashboard';
   }, 900);
 });
 

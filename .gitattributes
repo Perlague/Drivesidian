@@ -14,3 +14,9 @@ Caddyfile text eol=lf
 *.cmd text eol=crlf
 *.bat text eol=crlf
 *.vbs text eol=crlf
+
+# Librerías de terceros copiadas tal cual desde cdnjs (web/public/vendor/). Se
+# marcan binarias para que git no les toque los finales de línea: así el archivo
+# del repo es byte a byte el que publica cdnjs y su hash se puede comparar con
+# el de origen al actualizarlo (ver docs/DESPLIEGUE.md).
+web/public/vendor/* -text

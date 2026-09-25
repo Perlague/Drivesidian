@@ -22,6 +22,20 @@
 		# El contenido de una nota es texto que el usuario controla por
 		# completo. El editor ya lo sanitiza con DOMPurify; esto es la segunda
 		# línea de defensa.
+		#
+		# CSP estricta: ni 'unsafe-inline' ni ningún origen externo. Es lo que
+		# convierte un fallo de sanitización en nada — un <script> que se
+		# colara en el preview de una nota no se ejecutaría igual.
+		#
+		# Para que esto sea posible NO hay estilos ni scripts en línea en
+		# web/views/ (los datos del servidor viajan como atributos data-* del
+		# <body>, ver partials/head.ejs) y `marked` y DOMPurify se sirven desde
+		# web/public/vendor/ en vez de cdnjs.
+		#
+		# Un 'unsafe-inline' añadido aquí "para que algo funcione" anula casi
+		# todo lo que esta cabecera protege: si una vista nueva lo necesita, se
+		# arregla la vista.
+		Content-Security-Policy "default-src 'none'; script-src 'self'; style-src 'self'; img-src 'self' data:; connect-src 'self'; form-action 'self'; base-uri 'none'; frame-ancestors 'none'"
 		X-Content-Type-Options nosniff
 		X-Frame-Options DENY
 		Referrer-Policy strict-origin-when-cross-origin

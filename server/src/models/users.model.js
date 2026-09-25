@@ -12,9 +12,12 @@ const findByEmail = async (email) => {
   return result.rows[0] || null;
 };
 
+// twofa_enabled se calcula en lugar de devolver totp_secret: quien pregunta
+// por el usuario necesita saber si tiene segundo factor, no cuál es.
 const findById = async (id) => {
   const result = await pool.query(
-    `SELECT id, email, role, notify_enabled, created_at
+    `SELECT id, email, role, notify_enabled, created_at,
+            (totp_secret IS NOT NULL) AS twofa_enabled
      FROM users
      WHERE id = $1`,
     [id],

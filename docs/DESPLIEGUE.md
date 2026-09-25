@@ -117,6 +117,61 @@ docker compose exec -T postgres pg_dump -U drivesidian drivesidian \
 Vale la pena automatizarlo: GitHub tiene el contenido de las notas, pero **no**
 las cuentas, los secretos de 2FA ni los accesos de los agentes.
 
+### Actualizar `marked` y DOMPurify
+
+El editor no las carga de un CDN: viven en `web/public/vendor/`, versionadas en
+el repo. Eso es lo que permite que la CSP del `Caddyfile` no autorice ningún
+origen externo — con un `<script src="https://…">` habría que abrirle la puerta
+a cdnjs, y entonces quien controle ese origen controla el sanitizador.
+
+No hay gestor de paquetes en `web/` (el proyecto no tiene build step a
+propósito), así que se actualizan a mano:
+
+```bash
+# Ajusta las versiones y ejecútalo desde la raíz del repo.
+curl -sSL --fail -o web/public/vendor/marked.min.js https://cdnjs.cloudflare.com/ajax/libs/marked/12.0.2/marked.min.js
+curl -sSL --fail -o web/public/vendor/purify.min.js https://cdnjs.cloudflare.com/ajax/libs/dompurify/3.1.6/purify.min.js
+
+# Comprueba que son lo que dicen ser antes de commitear: la primera línea de
+# cada archivo lleva la versión y la licencia.
+head -c 200 web/public/vendor/marked.min.js
+head -c 200 web/public/vendor/purify.min.js
+```
+
+Versiones actuales y su hash SRI, para poder comparar con el origen:
+
+| Archivo | Versión | `sha384` |
+|---|---|---|
+| `marked.min.js` | 12.0.2 | `/TQbtLCAerC3jgaim+N78RZSDYV7ryeoBCVqTuzRrFec2akfBkHS7ACQ3PQhvMVi` |
+| `purify.min.js` | 3.1.6 | `+VfUPEb0PdtChMwmBcBmykRMDd+v6D/oFmB3rZM/puCMDYcIvF968OimRh4KQY9a` |
+
+Se recalculan con
+`openssl dgst -sha384 -binary <archivo> | openssl base64 -A`. `.gitattributes`
+marca esa carpeta como binaria para que git no toque los finales de línea y el
+hash del repo siga coincidiendo con el de cdnjs.
+
+Tras actualizar, **abre el editor y comprueba que el preview sigue pintando**.
+Falla cerrado: si `marked` o DOMPurify no cargan, no renderiza nada y avisa, en
+vez de meter HTML sin limpiar.
+
+### La CSP y lo que implica
+
+La cabecera `Content-Security-Policy` del `Caddyfile` es estricta: sin
+`'unsafe-inline'` y sin orígenes externos. Dos consecuencias prácticas:
+
+- **Ninguna vista de `web/views/` puede llevar `<script>…</script>` ni
+  `style="…"`.** Los datos que el servidor pasa a una página viajan como
+  atributos `data-*` del `<body>` (ver `web/views/partials/head.ejs`) y el
+  espaciado sale de las clases de utilidad de `app.css`. Un estilo en línea no
+  da error: el navegador lo descarta en silencio, que es peor.
+- **Una nota con una imagen remota no la muestra en el preview**
+  (`img-src 'self' data:`). Es a propósito: una `<img>` a un servidor ajeno
+  dentro de una nota avisaría a su dueño cada vez que alguien la abre. Los
+  adjuntos están fuera del MVP de todas formas.
+
+La CSP la sirve Caddy, así que `pnpm dev` a pelo **no la tiene**. Para probar
+que una vista nueva la respeta, levanta el stack con `DOMAIN=localhost`.
+
 ## Consumo esperado
 
 Medido en reposo con el stack completo levantado:

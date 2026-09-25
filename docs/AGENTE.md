@@ -51,6 +51,11 @@ Si es tu primera vez:
 
 Si ya tenías cuenta, solo entra y aprueba.
 
+Los pasos 2 y 3 **no se pueden saltar**: vincular un equipo le entrega una llave
+de larga duración a tu computadora, así que el servidor exige el segundo factor
+antes de dártela. Si tu cuenta todavía no lo tiene, la página te manda a
+activarlo y vuelve sola al mismo código.
+
 ## 5. Guarda una nota
 
 Abre Obsidian. Dentro de tu vault hay ahora una carpeta llamada

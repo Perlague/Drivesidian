@@ -1,4 +1,4 @@
-<%- include('partials/head', { title }) %>
+<%- include('partials/head', { title, datos: { siguiente: next || '' } }) %>
 <%- include('partials/nav', { current: '' }) %>
 
 <main class="angosto">
@@ -24,7 +24,7 @@
         </div>
       </details>
 
-      <form id="form-confirmar" style="margin-top: 1.25rem;">
+      <form id="form-confirmar" class="margen-arriba-amplio">
         <div class="campo">
           <label for="codigo">Código de seis dígitos</label>
           <input type="text" id="codigo" inputmode="numeric" autocomplete="one-time-code"
@@ -36,5 +36,4 @@
   </div>
 </main>
 
-<script>window.SIGUIENTE = <%- JSON.stringify(next || '') %>;</script>
 <%- include('partials/foot', { pageScript: '/js/enroll-2fa.js' }) %>

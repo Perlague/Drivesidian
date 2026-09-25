@@ -1,6 +1,7 @@
 'use strict';
 
 const { error } = require('../utils/response');
+const { logAuthzDenied } = require('../utils/authzDenied');
 
 // Se aplica DESPUÉS de requireAuth, que es quien pone req.auth.
 //
@@ -9,6 +10,7 @@ const { error } = require('../utils/response');
 // aunque su dueño lo sea.
 const requireRole = (role) => (req, res, next) => {
   if (req.auth?.role !== role) {
+    logAuthzDenied(req, { rolRequerido: role, superficie: 'api' });
     return error(res, 'No tienes permisos para esta operación.', 403);
   }
   return next();

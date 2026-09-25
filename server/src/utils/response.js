@@ -4,8 +4,13 @@ const success = (res, data, status = 200) => {
   res.status(status).json({ success: true, data });
 };
 
-const error = (res, message, status = 400) => {
-  res.status(status).json({ success: false, error: { message } });
+// `code` es opcional y solo se pone cuando el cliente tiene que reaccionar
+// distinto ante dos errores del mismo status. El alternativo sería que el
+// navegador comparara el texto del mensaje, que se rompe al reescribirlo.
+const error = (res, message, status = 400, code = null) => {
+  const payload = { message };
+  if (code) payload.code = code;
+  res.status(status).json({ success: false, error: payload });
 };
 
 // zodError: resultado de schema.safeParse(req.body).error — cada issue trae

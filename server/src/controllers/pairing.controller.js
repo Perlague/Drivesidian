@@ -2,6 +2,7 @@
 
 const crypto = require('crypto');
 const pairingModel = require('../models/pairingCodes.model');
+const usersModel = require('../models/users.model');
 const { issueAgentToken } = require('./agentTokens.controller');
 const { startSchema } = require('../schemas/pairing/start');
 const { approveSchema } = require('../schemas/pairing/approve');
@@ -147,6 +148,26 @@ const status = async (req, res) => {
 const approve = async (req, res) => {
   if (req.auth.type !== 'user') {
     return error(res, 'Este endpoint es exclusivo de la sesión web.', 403);
+  }
+
+  // Vincular un equipo entrega una credencial de larga duración con acceso de
+  // lectura y escritura a todas las notas del usuario. Exigir el segundo factor
+  // aquí es lo que impide que solo con una contraseña filtrada alguien se lleve
+  // esa credencial.
+  //
+  // La web ya guía por el enrolamiento, pero la API no puede confiar en que se
+  // llegue a ella por la interfaz: se comprueba en el servidor.
+  const user = await usersModel.findById(req.auth.userId);
+  if (!user) {
+    return error(res, 'La cuenta ya no existe.', 401);
+  }
+  if (!user.twofa_enabled) {
+    return error(
+      res,
+      'Activa la autenticación en dos pasos antes de vincular un equipo.',
+      403,
+      'twofa_required',
+    );
   }
 
   const parsed = approveSchema.safeParse(req.body);

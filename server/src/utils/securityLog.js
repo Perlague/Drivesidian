@@ -53,6 +53,10 @@ const EVENTS = {
   // pairing.consumed con un flag, para que el feed no diga "canjeado" cuando
   // en realidad se rechazó.
   PAIRING_REJECTED: 'pairing.rejected',
+  // Una sesión sin el rol necesario tocando algo de admin. No consigue nada
+  // —el middleware corta antes del controller— pero es de las señales más
+  // limpias que da el feed: una cuenta normal no llega ahí sola.
+  AUTHZ_DENIED: 'authz.denied',
 };
 
 // req.ip solo es la IP real del cliente si Express confía en el proxy que

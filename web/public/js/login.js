@@ -6,6 +6,10 @@ const campoTotp = document.getElementById('campo-totp');
 const inputTotp = document.getElementById('totp');
 const boton = document.getElementById('btn-entrar');
 
+// El servidor lo pasa como atributo data-* del <body>, no como script en
+// línea: así la CSP no necesita 'unsafe-inline' en script-src.
+const siguiente = document.body.dataset.siguiente;
+
 form.addEventListener('submit', async (evento) => {
   evento.preventDefault();
   limpiarAviso(aviso);
@@ -22,7 +26,7 @@ form.addEventListener('submit', async (evento) => {
   boton.disabled = false;
 
   if (res.ok) {
-    window.location.href = window.SIGUIENTE || '/notes';
+    window.location.href = siguiente || '/notes';
     return;
   }
 

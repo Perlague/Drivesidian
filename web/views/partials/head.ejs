@@ -7,4 +7,14 @@
   <link rel="stylesheet" href="/css/app.css" />
   <% if (typeof extraCss !== 'undefined') { %><link rel="stylesheet" href="<%= extraCss %>" /><% } %>
 </head>
-<body>
+<%#
+  `datos` viaja como atributos data-* del <body> en lugar de un <script> en
+  línea con window.X = …. Un dato del servidor no necesita ser código, y así la
+  CSP puede prohibir el script en línea sin excepciones: 'unsafe-inline' en
+  script-src anula casi todo lo que la cabecera protege.
+
+  Las claves van en una sola palabra a propósito: `data-notaId` se lee del DOM
+  en minúsculas (dataset.notaid), así que un camelCase aquí se rompería en
+  silencio.
+-%>
+<body<% if (typeof datos !== 'undefined' && datos) { %><% for (const clave of Object.keys(datos)) { %> data-<%= clave %>="<%= datos[clave] %>"<% } %><% } %>>

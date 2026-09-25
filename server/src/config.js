@@ -48,6 +48,12 @@ module.exports = {
   // por petición: Guardian lee el feed y cada línea le cuesta tokens.
   BULK_READ_WINDOW_MS: 60 * 60 * 1000,
 
+  // Un acceso denegado por rol emite como mucho un evento por ventana y por
+  // cuenta. Media hora: suficiente para que una sesión en bucle contra
+  // /api/admin no llene el feed, y corto para que dos tanteos separados en el
+  // tiempo se vean como dos.
+  AUTHZ_DENIED_WINDOW_MS: 30 * 60 * 1000,
+
   // Notas totales por usuario. Un vault normal ronda las cientos; 2000 deja
   // margen de sobra y ataja un agente en bucle o un vault clonado por error.
   MAX_NOTES_PER_USER: 2000,

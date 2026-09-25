@@ -1,4 +1,4 @@
-<%- include('partials/head', { title, extraCss: '/css/editor.css' }) %>
+<%- include('partials/head', { title, extraCss: '/css/editor.css', datos: { nota: noteId } }) %>
 <%- include('partials/nav', { current: 'notes' }) %>
 
 <main class="editor-main">
@@ -7,7 +7,7 @@
       <h1 id="ruta" class="mono">Cargando…</h1>
       <p class="subtitulo" id="meta"></p>
     </div>
-    <div class="acciones" style="margin: 0;">
+    <div class="acciones sin-margen">
       <button type="button" id="btn-guardar" disabled>Guardar</button>
       <a href="/notes"><button type="button" class="secundario">Volver</button></a>
     </div>
@@ -81,7 +81,9 @@
   </div>
 </dialog>
 
-<script src="https://cdnjs.cloudflare.com/ajax/libs/marked/12.0.2/marked.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/dompurify/3.1.6/purify.min.js"></script>
-<script>window.NOTE_ID = <%- JSON.stringify(noteId) %>;</script>
+<!-- Servidos desde este mismo servidor, no desde un CDN: es lo que permite
+     que la CSP del Caddyfile no tenga que autorizar ningún origen externo.
+     Se actualizan a mano; el procedimiento está en docs/DESPLIEGUE.md. -->
+<script src="/vendor/marked.min.js"></script>
+<script src="/vendor/purify.min.js"></script>
 <%- include('partials/foot', { pageScript: '/js/editor.js' }) %>

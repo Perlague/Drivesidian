@@ -9,7 +9,9 @@ const selectVault = document.getElementById('vault');
 const vaultUnico = document.getElementById('vault-unico');
 const botonAprobar = document.getElementById('btn-aprobar');
 
-const codigo = window.CODIGO;
+// El servidor lo pasa como atributo data-* del <body>, no como script en
+// línea: así la CSP no necesita 'unsafe-inline' en script-src.
+const codigo = document.body.dataset.codigo;
 
 const cargar = async () => {
   if (!codigo) {
@@ -76,6 +78,15 @@ botonAprobar.addEventListener('click', async () => {
 
   const res = await API.post('/pairing/approve', cuerpo);
   botonAprobar.disabled = false;
+
+  // El servidor exige segundo factor para vincular. En vez de dejar al usuario
+  // frente a un error sin salida, se le manda a enrolarlo y se vuelve al mismo
+  // código: el encadenado con `next` ya existe para el login.
+  if (res.code === 'twofa_required') {
+    const volver = `/pair?code=${encodeURIComponent(codigo)}`;
+    window.location.href = `/2fa?next=${encodeURIComponent(volver)}`;
+    return;
+  }
 
   if (!res.ok) {
     mostrarAviso(aviso, res.message);

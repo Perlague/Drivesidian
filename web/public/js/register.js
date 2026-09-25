@@ -4,6 +4,10 @@ const form = document.getElementById('form-registro');
 const aviso = document.getElementById('aviso');
 const boton = document.getElementById('btn-crear');
 
+// El servidor lo pasa como atributo data-* del <body>, no como script en
+// línea: así la CSP no necesita 'unsafe-inline' en script-src.
+const siguiente = document.body.dataset.siguiente;
+
 form.addEventListener('submit', async (evento) => {
   evento.preventDefault();
   limpiarAviso(aviso);
@@ -34,6 +38,6 @@ form.addEventListener('submit', async (evento) => {
 
   // Recién registrado nadie tiene 2FA: el siguiente paso es enrolarlo, y de
   // ahí se continúa a donde el usuario iba (p. ej. la vinculación del agente).
-  const siguiente = window.SIGUIENTE ? `?next=${encodeURIComponent(window.SIGUIENTE)}` : '';
-  window.location.href = `/2fa${siguiente}`;
+  const query = siguiente ? `?next=${encodeURIComponent(siguiente)}` : '';
+  window.location.href = `/2fa${query}`;
 });

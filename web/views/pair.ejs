@@ -1,4 +1,4 @@
-<%- include('partials/head', { title }) %>
+<%- include('partials/head', { title, datos: { codigo: code || '' } }) %>
 <%- include('partials/nav', { current: '' }) %>
 
 <main class="angosto">
@@ -18,7 +18,7 @@
         </tbody>
       </table>
 
-      <div class="campo" id="campo-vault" hidden style="margin-top: 1.25rem;">
+      <div class="campo margen-arriba-amplio" id="campo-vault" hidden>
         <label for="vault">¿Qué vault de Obsidian debe vigilar?</label>
         <select id="vault"></select>
         <p class="pista">El agente encontró más de uno en ese equipo.</p>
@@ -42,5 +42,4 @@
   </div>
 </main>
 
-<script>window.CODIGO = <%- JSON.stringify(code || '') %>;</script>
 <%- include('partials/foot', { pageScript: '/js/pair.js' }) %>

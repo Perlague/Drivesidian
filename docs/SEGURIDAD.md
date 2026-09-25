@@ -84,12 +84,23 @@ Se podan a los 90 días (`SECURITY_EVENT_RETENTION_DAYS`).
 | `pairing.rejected` | **critical** | Intento de canje con el verifier equivocado: alguien vio el código pero no tiene el secreto del agente. |
 | `pairing.expired` | info | Se intentó usar un código caducado. |
 
+### Autorización
+
+| Tipo | Severidad | Cuándo |
+|---|---|---|
+| `authz.denied` | warn | Una sesión sin el rol necesario intentó llegar a algo de admin. `details.surface` distingue `api` (403) de `page` (redirección), y `required_role`/`actual_role` dicen qué faltaba. |
+
+No consigue nada —el middleware corta antes del controller— pero es de las
+señales más limpias del feed: una cuenta normal no toca `/api/admin` sin querer.
+**Una línea por media hora y por cuenta**, no una por rechazo.
+
 ### Límites
 
 | Tipo | Severidad | Cuándo |
 |---|---|---|
 | `ratelimit.exceeded` | warn | Ver la nota de abajo sobre el volumen. |
 | `quota.exceeded` | warn | Un usuario alcanzó su tope de 2000 notas. |
+| `notes.bulk_read` | warn | Alguien pidió más de 100 notas de golpe con un agent token. Un agente al día pide unas pocas; esto es el patrón de quien se lleva todo. Una línea por hora y por token. |
 
 ## Dos cosas que conviene no romper
 

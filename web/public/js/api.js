@@ -34,6 +34,9 @@ const API = {
       status: res.status,
       message: payload?.error?.message || `Error ${res.status}.`,
       fields: payload?.error?.fields || null,
+      // Lo traen los errores en los que la página tiene que hacer algo más que
+      // mostrar el mensaje (por ejemplo `twofa_required` en la vinculación).
+      code: payload?.error?.code || null,
       // Solo lo trae el 409 del editor, con ambas versiones de la nota.
       conflict: payload?.conflict || null,
     };

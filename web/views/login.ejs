@@ -1,4 +1,4 @@
-<%- include('partials/head', { title }) %>
+<%- include('partials/head', { title, datos: { siguiente: next || '' } }) %>
 
 <main class="angosto">
   <h1>Entrar</h1>
@@ -29,11 +29,10 @@
       <button type="submit" class="ancho" id="btn-entrar">Entrar</button>
     </form>
 
-    <p class="pista" style="margin-top: 1rem;">
+    <p class="pista margen-arriba">
       ¿No tienes cuenta? <a href="/register<%= next ? '?next=' + encodeURIComponent(next) : '' %>">Crear una</a>
     </p>
   </div>
 </main>
 
-<script>window.SIGUIENTE = <%- JSON.stringify(next || '') %>;</script>
 <%- include('partials/foot', { pageScript: '/js/login.js' }) %>

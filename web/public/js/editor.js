@@ -6,6 +6,10 @@ const aviso = document.getElementById('aviso');
 const botonGuardar = document.getElementById('btn-guardar');
 const dialogo = document.getElementById('dialogo-conflicto');
 
+// El servidor lo pasa como atributo data-* del <body>, no como script en
+// línea: así la CSP no necesita 'unsafe-inline' en script-src.
+const notaId = document.body.dataset.nota;
+
 // La version con la que se abrió la nota. Se manda en cada guardado para que el
 // servidor detecte si alguien más la tocó mientras tanto (compare-and-swap).
 let version = null;
@@ -33,7 +37,7 @@ const render = () => {
 
 // --- Carga ---
 const cargar = async () => {
-  const res = await API.get(`/notes/${window.NOTE_ID}`);
+  const res = await API.get(`/notes/${notaId}`);
 
   if (!res.ok) {
     document.getElementById('ruta').textContent = 'Nota no encontrada';
@@ -74,7 +78,7 @@ const resolver = async (quedarse, boton) => {
   limpiarAviso(aviso);
   boton.disabled = true;
 
-  const res = await API.post(`/notes/${window.NOTE_ID}/resolve`, { keep: quedarse });
+  const res = await API.post(`/notes/${notaId}/resolve`, { keep: quedarse });
   boton.disabled = false;
 
   if (!res.ok) {
@@ -102,7 +106,7 @@ const guardar = async (contenido, versionEsperada) => {
   limpiarAviso(aviso);
   botonGuardar.disabled = true;
 
-  const res = await API.put(`/notes/${window.NOTE_ID}`, {
+  const res = await API.put(`/notes/${notaId}`, {
     content: contenido,
     version: versionEsperada,
   });

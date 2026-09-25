@@ -278,3 +278,14 @@ dialog::backdrop { background: rgba(0, 0, 0, 0.5); }
   .topbar { flex-wrap: wrap; }
   main { padding: 1.25rem 1rem 3rem; }
 }
+
+/* ---------- Utilidades de espaciado ---------- */
+
+/* Existen para que ninguna vista necesite un atributo style="". La CSP del
+   Caddyfile no lleva 'unsafe-inline' en style-src, así que un estilo en línea
+   dejaría de aplicarse sin dar error visible: el navegador solo lo descarta. */
+.sin-margen { margin: 0; }
+.sin-margen-abajo { margin-bottom: 0; }
+.margen-arriba { margin-top: 1rem; }
+.margen-arriba-amplio { margin-top: 1.25rem; }
+.centrado { text-align: center; }
