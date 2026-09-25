@@ -16,11 +16,34 @@ llega el tráfico de internet al servidor; todo lo demás es idéntico.
 Empieza por (A): levanta en dos minutos y no toca DNS ni el Security Group.
 Pásate a (B) cuando tengas dominio.
 
+> **¿Primera vez?** [PRIMER-DESPLIEGUE.md](PRIMER-DESPLIEGUE.md) lleva los
+> mismos pasos en forma literal, incluida la parte de las consolas de GitHub,
+> ngrok y AWS.
+
 ## Requisitos comunes
 
-- Una instancia con Docker y el plugin de Compose.
+En la instancia, exactamente tres cosas:
+
+```bash
+git --version
+docker --version
+docker compose version
+```
+
+**Nada más.** No hace falta Node, ni pnpm, ni Postgres, ni Caddy instalados en la
+máquina: todos viven dentro de las imágenes. Si algo de eso falta en una Ubuntu
+recién creada:
+
+```bash
+sudo apt update && sudo apt install -y git docker.io docker-compose-v2
+sudo usermod -aG docker "$USER"   # cierra sesión y vuelve a entrar
+```
+
+Aparte del sistema, dos cosas de otras cuentas:
+
 - Un repositorio de GitHub **privado** para las notas, y un Personal Access
   Token con permiso de escritura sobre él.
+- Según el camino: un authtoken de ngrok (A) o un dominio (B).
 
 ---
 
@@ -32,15 +55,14 @@ Pasos completos, desde cero:
 # 1. Traer el código
 git clone https://github.com/Perlague/Drivesidian.git
 cd Drivesidian
-cp .env.example .env
 
-# 2. Generar los tres secretos y pegarlos en el .env
-node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"   # x3
+# 2. Crear el .env y generar los secretos de máquina
+./scripts/init-env.sh
 
-# 3. En el .env, dejar esta línea (viene así por defecto):
-#      COMPOSE_FILE=docker-compose.yml:docker-compose.ngrok.yml
-#    y poner el authtoken de https://dashboard.ngrok.com/get-started/your-authtoken
-#      NGROK_AUTHTOKEN=...
+# 3. Pegar lo que el script pidió: el authtoken de ngrok y los cuatro de GitHub.
+#    La línea de COMPOSE_FILE ya viene con el camino del túnel.
+nano .env
+./scripts/init-env.sh        # otra vez, para comprobar que no falta nada
 
 # 4. Arriba
 docker compose up -d
@@ -48,6 +70,11 @@ docker compose up -d
 # 5. El log dice a qué URL conectarse
 docker compose logs server
 ```
+
+`init-env.sh` genera `POSTGRES_PASSWORD`, `JWT_SECRET`, `TOTP_ENCRYPTION_KEY` y
+`NTFY_SECRET` —los cuatro que ningún humano necesita leer— y deja marcados los
+que vienen de otra cuenta. Es idempotente: correrlo de nuevo no regenera nada, y
+por eso sirve como comprobación antes de levantar.
 
 El log termina con el enlace:
 
@@ -92,7 +119,7 @@ Let's Encrypt valida por el puerto 80 y falla si no llega.
 ```bash
 git clone https://github.com/Perlague/Drivesidian.git
 cd Drivesidian
-cp .env.example .env
+./scripts/init-env.sh
 nano .env
 docker compose up -d
 ```
@@ -147,11 +174,21 @@ pnpm start
 
 ## Variables de entorno
 
-Los tres secretos se generan igual:
+**Los cuatro secretos de máquina los genera `./scripts/init-env.sh`** y no tienen
+por qué pasar por tus manos: nadie los teclea y nadie los lee. A mano serían los
+cuatro igual:
 
 ```bash
-node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
+openssl rand -hex 32
 ```
+
+**Hex de 64 caracteres, no base64.** `TOTP_ENCRYPTION_KEY` se lee con
+`Buffer.from(valor, 'hex')` para AES-256-GCM (`utils/secretCrypto.js`); con otro
+formato el servidor arranca igual y falla al enrolar el primer 2FA.
+
+Las demás vienen de otra cuenta y las pegas tú. La diferencia importa: un
+secreto de máquina se regenera sin consecuencias mientras la base esté vacía, y
+una credencial externa no se puede inventar.
 
 | Variable | Qué es |
 |---|---|

@@ -33,6 +33,7 @@ Tres piezas, cada una en su carpeta:
 
 ## Manuales
 
+- **[Primer despliegue paso a paso](docs/PRIMER-DESPLIEGUE.md)** — guía literal para levantarlo la primera vez con ngrok, sin dominio.
 - **[Desplegar el servidor](docs/DESPLIEGUE.md)** — EC2, Docker Compose, variables de entorno, respaldos.
 - **[Instalar el agente](docs/AGENTE.md)** — para quien solo quiere sincronizar sus notas.
 - **[Eventos de seguridad](docs/SEGURIDAD.md)** — el feed que consume Guardian, el proyecto hermano de Ciberseguridad.
