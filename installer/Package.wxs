@@ -1,0 +1,82 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  MSI del agente de Drivesidian.
+
+  NO tiene diálogos de configuración: ni token ni ruta del vault. Se descartó
+  pedirlos porque obligaba al usuario —que no es programador— a pasar antes por
+  la web, generar un token, copiarlo y buscar la carpeta de su vault a mano.
+  Todo eso lo resuelve la vinculación por código: el agente abre el navegador
+  solo la primera vez que arranca.
+
+  La UI de este MSI nunca se ve: lo instala el bundle de Burn en silencio.
+-->
+<Wix xmlns="http://wixtoolset.org/schemas/v4/wxs">
+
+  <Package
+      Name="Drivesidian Agent"
+      Manufacturer="Drivesidian"
+      Version="$(var.Version)"
+      UpgradeCode="7f3c1a92-5d48-4b6e-9a01-2c8f4e7d3b15"
+      Scope="perMachine"
+      Compressed="yes">
+
+    <!-- Reinstalar encima quita la versión anterior en vez de dejar las dos. -->
+    <MajorUpgrade DowngradeErrorMessage="Ya hay una versión más reciente de Drivesidian Agent instalada." />
+    <MediaTemplate EmbedCab="yes" />
+
+    <StandardDirectory Id="ProgramFiles64Folder">
+      <Directory Id="INSTALLFOLDER" Name="Drivesidian" />
+    </StandardDirectory>
+
+    <Feature Id="Principal" Title="Agente de Drivesidian" Level="1">
+      <ComponentGroupRef Id="ArchivosDelAgente" />
+    </Feature>
+
+    <!--
+      Custom Actions.
+
+      Impersonate="yes" es deliberado y no un descuido: estas acciones tienen
+      que correr como el usuario que instala, no como SYSTEM. El agente vigila
+      SU vault y escribe en SU %APPDATA%; una tarea registrada por SYSTEM
+      apuntaría al perfil equivocado.
+
+      Return="ignore" en las dos: que falle el arranque automático no debe
+      abortar la instalación, y que falle la desvinculación no debe dejar una
+      desinstalación a medias.
+    -->
+    <CustomAction Id="RegistrarArranque"
+                  Directory="INSTALLFOLDER"
+                  ExeCommand="&quot;[System64Folder]cmd.exe&quot; /c &quot;[INSTALLFOLDER]register-task.cmd&quot;"
+                  Execute="deferred"
+                  Impersonate="yes"
+                  Return="ignore" />
+
+    <CustomAction Id="QuitarArranque"
+                  Directory="INSTALLFOLDER"
+                  ExeCommand="&quot;[System64Folder]cmd.exe&quot; /c &quot;[INSTALLFOLDER]unregister-task.cmd&quot;"
+                  Execute="deferred"
+                  Impersonate="yes"
+                  Return="ignore" />
+
+    <InstallExecuteSequence>
+      <!-- Después de copiar los archivos: el .cmd que se invoca es uno de ellos. -->
+      <Custom Action="RegistrarArranque" After="InstallFiles" Condition="NOT Installed" />
+      <!-- ANTES de borrarlos: la desvinculación necesita src/unpair.js. -->
+      <Custom Action="QuitarArranque" Before="RemoveFiles" Condition="REMOVE=&quot;ALL&quot;" />
+    </InstallExecuteSequence>
+
+  </Package>
+
+  <Fragment>
+    <!--
+      El contenido de la carpeta se toma tal cual del staging que arma build.ps1
+      (src/, node_modules/, los scripts). node_modules va YA RESUELTO y con
+      node-linker=hoisted: el layout normal de pnpm son enlaces simbólicos, que
+      no sobreviven al empaquetado en un MSI.
+    -->
+    <ComponentGroup Id="ArchivosDelAgente" Directory="INSTALLFOLDER">
+      <Files Include="$(var.StagingDir)\**" />
+    </ComponentGroup>
+  </Fragment>
+
+</Wix>

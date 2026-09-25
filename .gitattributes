@@ -8,3 +8,9 @@
 Dockerfile text eol=lf
 docker-compose.yml text eol=lf
 Caddyfile text eol=lf
+
+# cmd.exe y wscript EXIGEN CRLF. Con LF, cmd se come el primer carácter de cada
+# línea y el script falla con errores que no apuntan al problema real.
+*.cmd text eol=crlf
+*.bat text eol=crlf
+*.vbs text eol=crlf

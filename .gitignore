@@ -145,3 +145,9 @@ CLAUDE.md
 
 # Banco de pruebas de ciberseguridad (local, no se versiona)
 test/
+
+# Artefactos de build del instalador
+installer/dist/
+installer/staging/
+installer/redist/
+installer/icono.ico

@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Bootstrapper de WiX Burn: encadena el instalador oficial de Node.js con el MSI
+  del agente en un solo .exe descargable.
+
+  Se eligió esto y no un .exe autocontenido tipo Node SEA a cambio de una
+  experiencia de instalación más estándar en Windows: entrada en "Agregar o
+  quitar programas", desinstalación limpia, y la posibilidad de registrar el
+  arranque automático desde una Custom Action.
+
+  El .msi de Node NO se descarga en tiempo de instalación: build.ps1 lo baja
+  antes de compilar y Burn lo incrusta. Así el instalador funciona sin internet,
+  igual que node_modules va ya resuelto dentro del MSI.
+-->
+<Wix xmlns="http://wixtoolset.org/schemas/v4/wxs"
+     xmlns:bal="http://wixtoolset.org/schemas/v4/wxs/bal">
+
+  <Bundle
+      Name="Drivesidian Agent"
+      Manufacturer="Drivesidian"
+      Version="$(var.Version)"
+      UpgradeCode="c1e84d7b-9f26-4a53-8e10-6b4d2a9c7f38"
+      IconSourceFile="$(var.IconPath)"
+      Compressed="yes">
+
+    <BootstrapperApplication>
+      <bal:WixStandardBootstrapperApplication
+          Theme="hyperlinkLicense"
+          LicenseUrl=""
+          SuppressOptionsUI="yes" />
+    </BootstrapperApplication>
+
+    <Chain>
+      <!--
+        Permanent="yes": al desinstalar Drivesidian NO se quita Node.js. El
+        usuario pudo tenerlo ya instalado, o depender de él para otra cosa;
+        llevárselo por delante sería una sorpresa desagradable.
+
+        El MSI de Node se detecta a sí mismo por su ProductCode, así que si ya
+        está presente esta entrada se salta sola.
+      -->
+      <MsiPackage
+          Id="NodeJs"
+          SourceFile="$(var.RedistDir)\$(var.NodeMsi)"
+          DisplayName="Node.js"
+          Permanent="yes"
+          Vital="yes" />
+
+      <MsiPackage
+          Id="DrivesidianAgent"
+          SourceFile="$(var.MsiPath)"
+          DisplayName="Drivesidian Agent"
+          Vital="yes" />
+    </Chain>
+
+  </Bundle>
+</Wix>

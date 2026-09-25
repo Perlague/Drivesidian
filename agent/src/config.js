@@ -4,10 +4,21 @@ const fs = require('fs');
 const path = require('path');
 const { configFile } = require('./paths');
 
-// Valor por defecto para desarrollo. El instalador escribe el real en el
-// config.json al armar el paquete; la variable de entorno permite apuntar a
-// otro servidor sin tocar el archivo.
+// Último recurso, solo para desarrollo local.
 const DEFAULT_API_URL = 'http://127.0.0.1:3000';
+
+// El instalador escribe config.default.json junto a la aplicación con la URL
+// del servidor contra el que se armó el paquete. Es de solo lectura y no se
+// toca nunca: la configuración del usuario vive aparte, en %APPDATA%, porque
+// Program Files no es escribible para una cuenta normal.
+const leerPorDefecto = () => {
+  try {
+    const ruta = path.join(__dirname, '..', 'config.default.json');
+    return JSON.parse(fs.readFileSync(ruta, 'utf8'));
+  } catch {
+    return {};
+  }
+};
 
 const leer = () => {
   const ruta = configFile();
@@ -38,8 +49,17 @@ const guardar = (cambios) => {
 
 const cargar = () => {
   const archivo = leer();
+  // Orden de precedencia: variable de entorno (para probar contra otro
+  // servidor sin tocar nada) > configuración del usuario > la que trae el
+  // instalador > el default de desarrollo.
+  const apiUrl =
+    process.env.DRIVESIDIAN_API_URL ||
+    archivo.apiUrl ||
+    leerPorDefecto().apiUrl ||
+    DEFAULT_API_URL;
+
   return {
-    apiUrl: (process.env.DRIVESIDIAN_API_URL || archivo.apiUrl || DEFAULT_API_URL).replace(/\/+$/, ''),
+    apiUrl: apiUrl.replace(/\/+$/, ''),
     agentToken: archivo.agentToken || null,
     vaultPath: archivo.vaultPath || null,
   };
