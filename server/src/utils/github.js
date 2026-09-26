@@ -83,6 +83,38 @@ const readBranchHead = async () => {
   return { commitSha: ref.object.sha, treeSha: commit.tree.sha };
 };
 
+const README_INICIAL = [
+  '# Notas de Drivesidian',
+  '',
+  'Este repositorio lo escribe el servidor de Drivesidian. Cada usuario tiene',
+  'su propia carpeta `user-<id>-<slug>/`.',
+  '',
+  'No edites nada a mano: el servidor sube por lotes sobre la punta de la rama,',
+  'y un commit directo aquí obliga a rearmar el lote que estuviera en curso.',
+  '',
+].join('\n');
+
+// **En un repo sin NINGÚN commit la Git Data API entera no existe**: /git/refs,
+// /git/trees y /git/commits responden 409 «Git Repository is empty». No hay base
+// de datos de git que tocar hasta que exista un primer commit.
+//
+// La Contents API sí funciona ahí, y crea ese commit inicial. Se usa **una sola
+// vez, para sembrar la rama**; a partir de ese momento todo vuelve a ir por la
+// Git Data API. Esto no contradice la decisión de no usar la Contents API para
+// los lotes —sigue siendo un commit por archivo y sigue sin poder agrupar—:
+// aquí no se está subiendo un lote, se está inicializando el repositorio.
+//
+// Sin esto, un repo privado recién creado —que es justo lo que pide la guía de
+// despliegue— deja al worker fallando en cada ciclo y a las notas atascadas en
+// `pending` para siempre.
+const sembrarRepoVacio = async () => {
+  await ghJson('PUT', `/contents/${encodeSegments('README.md')}`, {
+    message: 'Inicializa el repositorio de notas',
+    content: Buffer.from(README_INICIAL, 'utf8').toString('base64'),
+    branch: branchName(),
+  });
+};
+
 // Sube un lote completo en UN SOLO commit.
 // files: [{ path, content }] — el contenido va inline en el árbol, así que no
 // hacen falta blobs aparte (la API solo acepta texto UTF-8 así, que es lo que
@@ -91,7 +123,14 @@ const putBatch = async (files, message) => {
   if (files.length === 0) return null;
 
   for (let attempt = 1; attempt <= MAX_REF_ATTEMPTS; attempt += 1) {
-    const head = await readBranchHead();
+    let head = await readBranchHead();
+
+    if (!head) {
+      await sembrarRepoVacio();
+      // Se relee en vez de dar por hecha la punta: el commit inicial lo hizo
+      // otra API y queremos el sha y el árbol tal como quedaron.
+      head = await readBranchHead();
+    }
 
     const tree = await ghJson('POST', '/git/trees', {
       // base_tree hereda todo lo que ya existe en el repo: solo se
