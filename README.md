@@ -37,6 +37,7 @@ Tres piezas, cada una en su carpeta:
 - **[Desplegar el servidor](docs/DESPLIEGUE.md)** — EC2, Docker Compose, variables de entorno, respaldos.
 - **[Instalar el agente](docs/AGENTE.md)** — para quien solo quiere sincronizar sus notas.
 - **[Guardian](docs/GUARDIAN.md)** — el agente de IA que defiende la instancia: riesgos, capas, severidades y límites.
+- **[Desplegar Guardian](docs/GUARDIAN-DESPLIEGUE.md)** — script de instalación de Suricata y CrowdSec, paso a paso.
 - **[Eventos de seguridad](docs/SEGURIDAD.md)** — el feed que consume Guardian, el proyecto hermano de Ciberseguridad.
 - **[Construir el instalador](installer/README.md)** — para generar el `.exe` de distribución.
 

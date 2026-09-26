@@ -63,7 +63,14 @@ const ghJson = async (method, suffix, body) => {
 // todavía no tiene ningún commit (repo recién creado, sin README).
 const readBranchHead = async () => {
   const response = await ghFetch('GET', `/git/ref/heads/${encodeSegments(branchName())}`);
-  if (response.status === 404) return null;
+  // Los dos significan «no hay punta de rama», y GitHub los distingue:
+  //   404 -> el repo tiene commits, pero no esta rama.
+  //   409 -> el repo no tiene NINGÚN commit («Git Repository is empty»).
+  // El 409 es justo el de un repo recién creado sin README, que es el caso
+  // normal al desplegar por primera vez. Tratarlo como error dejaba el lote
+  // fallando en cada ciclo del worker, con las notas atascadas en `pending`
+  // para siempre. Verificado contra un repo vacío real.
+  if (response.status === 404 || response.status === 409) return null;
   if (!response.ok) {
     throw new GitHubError(
       `GitHub GET ref falló (${response.status}): ${await response.text()}`,

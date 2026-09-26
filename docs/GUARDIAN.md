@@ -121,6 +121,8 @@ Honestidad ante todo: esto es lo que hay hoy y lo que falta.
 | **CrowdSec** | Reputación de IP compartida + detección por comportamiento en logs | ⬜ **Por instalar** |
 | **Guardian / OpenClaw** | El cerebro que correlaciona y decide | ⬜ **Por levantar** |
 
+Las tres que faltan se instalan con [GUARDIAN-DESPLIEGUE.md](GUARDIAN-DESPLIEGUE.md).
+
 La rúbrica pide **al menos dos capas de detección activas**. El feed de la
 aplicación es una; Suricata y CrowdSec son las otras dos, y son las que faltan.
 
@@ -233,7 +235,8 @@ utilizable de uno peligroso.
 
 1. **Todo bloqueo se escribe antes de aplicarse**, en
    `~/security-audits/acciones.jsonl`: qué, a quién, por qué, cuándo caduca.
-2. **Todo bloqueo caduca solo.** Una tarea periódica retira lo vencido.
+2. **Todo bloqueo caduca solo.** Una tarea periódica retira lo vencido
+   — requisito de diseño, pendiente junto con el resto de Guardian.
 3. **Deshacer a mano es un comando**, y está documentado abajo.
 4. **Guardian no puede borrar su propio registro de acciones.**
 
@@ -341,55 +344,8 @@ marketing:
 
 ---
 
-## Despliegue rápido
+## Desplegar
 
-En la terminal de la EC2 (EC2 → Instances → `DrivesidianVM` → **Connect**).
-
-### 1. Suricata
-
-```bash
-sudo apt update && sudo apt install -y suricata
-sudo suricata-update
-sudo systemctl enable --now suricata
-```
-
-### 2. CrowdSec
-
-```bash
-curl -s https://install.crowdsec.net | sudo sh
-sudo apt install -y crowdsec crowdsec-firewall-bouncer-iptables
-sudo systemctl enable --now crowdsec
-```
-
-### 3. Comprobar que las dos detectan
-
-```bash
-sudo systemctl status suricata crowdsec --no-pager
-sudo cscli metrics
-sudo tail -5 /var/log/suricata/fast.log
-```
-
-### 4. Carpeta de acciones para Guardian
-
-```bash
-mkdir -p ~/security-audits && touch ~/security-audits/acciones.jsonl
-```
-
-### 5. Levantar Guardian
-
-Instala OpenClaw en la instancia y dale como *system prompt* las cinco reglas de
-la sección 2 y los límites duros de la sección 4. Que lea:
-
-```bash
-cd ~/Drivesidian && docker compose logs -f server | grep drivesidian.security
-sudo tail -f /var/log/suricata/fast.log
-sudo cscli alerts list
-```
-
-### 6. Probar que responde
-
-Ejecuta el **Escenario A** de la sección 5 y comprueba que Guardian reacciona al
-`auth.lockout` y escribe en `acciones.jsonl`.
-
-> **Memoria:** la instancia son 2 GB compartidos. Suricata es lo más pesado de
-> los tres. Vigila con `free -h` y reduce sus reglas si hace falta.
+Los pasos para instalar las capas de detección y levantar Guardian viven aparte,
+en **[GUARDIAN-DESPLIEGUE.md](GUARDIAN-DESPLIEGUE.md)**: una guía corta con un
+script que se pega en la terminal de la instancia y se ejecuta.
