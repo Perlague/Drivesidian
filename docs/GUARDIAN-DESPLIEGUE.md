@@ -207,12 +207,22 @@ originan en **patrones de eventos**, no en lo que los eventos dicen.
 ## Tus fuentes
 
 1. Feed de la aplicación (JSON por línea):
-   `cd ~/Drivesidian && docker compose logs -f server | grep drivesidian.security`
-2. Suricata (IDS de red): `sudo tail -f /var/log/suricata/fast.log`
+   `cd ~/Drivesidian && docker compose logs --since 1h --tail 200 server | grep drivesidian.security`
+2. Suricata (IDS de red): `sudo tail -200 /var/log/suricata/fast.log`
 3. CrowdSec (reputación y comportamiento): `sudo cscli alerts list`
 4. Estado del sistema: `ufw status numbered`, `ss -lntp`, `free -h`, `journalctl`
 
 El catálogo completo de eventos está en `~/Drivesidian/docs/SEGURIDAD.md`.
+
+## Cómo consultas tus fuentes
+
+Nunca uses modo seguimiento (`-f`, `--follow`, `tail -f`) en un comando que
+lances tú: no termina nunca y te quedas bloqueado esperando. Usa siempre una
+consulta acotada: `--since`, `--tail`, `-n`, `LIMIT`.
+
+Si necesitas más contexto, haz varias consultas acotadas en vez de una abierta.
+Un volcado enorme te llena la ventana de contexto y te deja sin sitio para
+razonar, que es justo lo que necesitas para correlacionar.
 
 ## Cómo leer las severidades
 
