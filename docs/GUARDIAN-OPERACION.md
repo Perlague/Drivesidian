@@ -60,11 +60,65 @@ docker compose exec -T postgres psql -U drivesidian drivesidian -c \
 
 ---
 
-## Desbloquear una IP
+## IPs bloqueadas
 
-Hay **dos sitios** que pueden tener bloqueada la misma IP. Revisa los dos.
+Hay **dos sitios** que bloquean por su cuenta y no se enteran el uno del otro:
+`ufw` (lo que hace Guardian) y CrowdSec (lo que decide él solo). Una IP puede
+estar en uno, en el otro, o en los dos.
 
-### 1. `ufw` — lo que bloquea Guardian
+### Verlas todas de una vez
+
+```bash
+echo "── ufw (Guardian) ──"; sudo ufw status numbered | grep -i deny || echo "  ninguna"
+echo "── CrowdSec ──";       sudo cscli decisions list 2>/dev/null || echo "  ninguna"
+echo "── registro de Guardian ──"; tail -5 ~/security-audits/acciones.jsonl
+```
+
+### Desbloquear en los dos a la vez
+
+```bash
+IP=203.0.113.45
+
+sudo ufw delete deny from "$IP"        || echo "no estaba en ufw"
+sudo cscli decisions delete --ip "$IP" || echo "no estaba en CrowdSec"
+```
+
+Comprobar que quedó libre:
+
+```bash
+sudo ufw status | grep "$IP" || echo "libre en ufw"
+sudo cscli decisions list | grep "$IP" || echo "libre en CrowdSec"
+```
+
+> Si quieres tenerlo a mano siempre, pégalo una vez en tu `~/.bashrc`:
+>
+> ```bash
+> desbloquear() {
+>   [ -n "${1:-}" ] || { echo "uso: desbloquear <ip>"; return 1; }
+>   sudo ufw delete deny from "$1"        || echo "no estaba en ufw"
+>   sudo cscli decisions delete --ip "$1" || echo "no estaba en CrowdSec"
+> }
+> ```
+>
+> Recarga con `source ~/.bashrc` y luego es `desbloquear 203.0.113.45`.
+
+### Quitar TODOS los bloqueos de golpe
+
+```bash
+sudo cscli decisions delete --all
+# ufw: de mayor a menor, porque los números se recalculan al borrar
+sudo ufw status numbered | grep -i deny | grep -oP '^\[\s*\K\d+' | sort -rn \
+  | while read -r n; do yes | sudo ufw delete "$n"; done
+```
+
+Úsalo si Guardian se pasó de celoso y quieres empezar limpio. **No desactiva el
+firewall**: solo retira las reglas `DENY` que se añadieron.
+
+---
+
+### El detalle, fuente por fuente
+
+#### 1. `ufw` — lo que bloquea Guardian
 
 ```bash
 sudo ufw status numbered
@@ -88,7 +142,7 @@ Sin depender del número:
 sudo ufw delete deny from 203.0.113.45
 ```
 
-### 2. CrowdSec — sus propias decisiones, aparte de `ufw`
+#### 2. CrowdSec — sus propias decisiones, aparte de `ufw`
 
 ```bash
 sudo cscli decisions list
@@ -98,7 +152,7 @@ sudo cscli decisions delete --ip 203.0.113.45
 Quitarla de `ufw` **no** la quita de CrowdSec. Si la IP sigue sin entrar
 después de borrar la regla, es esto.
 
-### Emergencia
+#### Emergencia
 
 ```bash
 sudo ufw disable        # quita TODA la protección de red
