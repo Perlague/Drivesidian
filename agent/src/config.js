@@ -15,7 +15,11 @@ const DEFAULT_API_URL = 'http://127.0.0.1:3000';
 const leerPorDefecto = () => {
   try {
     const ruta = path.join(__dirname, '..', 'config.default.json');
-    return JSON.parse(fs.readFileSync(ruta, 'utf8'));
+    // El .replace() quita un BOM inicial: JSON.parse lanza si lo encuentra, y
+    // este archivo lo escribe PowerShell, que mete BOM con demasiada facilidad.
+    // Sin esto el fallo es invisible —el catch devuelve {} y el agente se va a
+    // su URL por defecto— con un archivo que a simple vista se ve bien.
+    return JSON.parse(fs.readFileSync(ruta, 'utf8').replace(/^\uFEFF/, ''));
   } catch {
     return {};
   }

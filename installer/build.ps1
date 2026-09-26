@@ -56,7 +56,17 @@ Copy-Item (Join-Path $aqui "unregister-task.cmd") $staging
 
 # El agente lee apiUrl de aqui la primera vez. El token y el vault los rellena
 # el propio agente al vincularse; este archivo solo siembra la URL.
-@{ apiUrl = $ApiUrl } | ConvertTo-Json | Set-Content (Join-Path $staging "config.default.json") -Encoding utf8
+#
+# **WriteAllText y no Set-Content -Encoding utf8**: en Windows PowerShell 5.1 ese
+# parametro escribe UTF-8 CON BOM, y JSON.parse de Node lanza al toparse con los
+# tres bytes EF BB BF. Como el agente traga ese error y cae a su URL por defecto,
+# el sintoma era un agente apuntando a 127.0.0.1 con un archivo que a simple
+# vista se veia correcto. Verificado sobre un paquete ya instalado.
+$sinBom = New-Object System.Text.UTF8Encoding $false
+[System.IO.File]::WriteAllText(
+  (Join-Path $staging "config.default.json"),
+  (@{ apiUrl = $ApiUrl } | ConvertTo-Json),
+  $sinBom)
 
 Write-Host "=== 3/5 Resolviendo node_modules ===" -ForegroundColor Cyan
 # --node-linker=hoisted es OBLIGATORIO: el layout por defecto de pnpm son
