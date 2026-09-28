@@ -11,6 +11,10 @@
 const log = require('./log');
 const config = require('./config');
 
+// El desinstalador espera a que este proceso termine: sin tope, un servidor
+// que acepta la conexión y nunca responde dejaría la desinstalación colgada.
+const TIEMPO_MAXIMO_MS = 10_000;
+
 const desvincular = async () => {
   const { apiUrl, agentToken } = config.cargar();
 
@@ -21,6 +25,7 @@ const desvincular = async () => {
       const respuesta = await fetch(`${apiUrl}/api/agent-tokens/self`, {
         method: 'DELETE',
         headers: { Authorization: `Bearer ${agentToken}` },
+        signal: AbortSignal.timeout(TIEMPO_MAXIMO_MS),
       });
 
       if (respuesta.ok) log.info('Acceso revocado en el servidor.');
@@ -35,7 +40,10 @@ const desvincular = async () => {
   log.info('Configuración local borrada.');
 };
 
-desvincular()
-  // Nunca se sale con error: un fallo aquí no debe abortar la desinstalación.
-  .catch((err) => log.warn(`Desvinculación incompleta: ${err.message}`))
-  .finally(() => process.exit(0));
+// Nunca se sale con error: un fallo aquí no debe abortar la desinstalación.
+//
+// Sin process.exit(): el proceso termina solo cuando no le queda trabajo. En
+// Windows, con Node 24, forzar la salida mientras la conexión del fetch se está
+// cerrando tumba el proceso con 0xC0000409 (una aserción de libuv en
+// src\win\async.c), después de haber revocado y borrado todo.
+desvincular().catch((err) => log.warn(`Desvinculación incompleta: ${err.message}`));

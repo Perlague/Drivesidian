@@ -9,7 +9,7 @@
     "start": "node index.js",
     "dev": "node --watch index.js",
     "test": "node tests/correr.js",
-    "test:db": "docker run --rm -d --name drivesidian-test-db -e POSTGRES_USER=drivesidian -e POSTGRES_PASSWORD=test -e POSTGRES_DB=drivesidian_test -p 55432:5432 postgres:16-alpine",
+    "test:db": "node tests/base.js",
     "migrate": "node-pg-migrate",
     "migrate:up": "node-pg-migrate up",
     "migrate:down": "node-pg-migrate down",

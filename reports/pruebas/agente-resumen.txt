@@ -1,94 +1,94 @@
 ▶ flujo completo de un usuario
-  ✔ 1 · vincula el equipo: el agente pide código, la persona aprueba, el agente recibe su token (3545.8051ms)
-  ✔ 2 · una nota escrita en Obsidian llega al servidor, pendiente de subir a GitHub (79.6778ms)
-  ✔ 3 · lo que se edita en la web baja al disco en la siguiente consulta (81.5432ms)
-  ✔ 4 · una edición local posterior sube como versión 3, sin conflicto (50.8328ms)
-  ✔ 5 · si cambian los dos lados, nadie pisa a nadie: conflicto que resuelve una persona (179.1331ms)
-  ✔ 6 · el agente arranca solo, vigila la carpeta y sube una nota nueva (2038.1905ms)
-  ✔ 7 · al desinstalar, el agente revoca su propio token y borra su configuración (1588.5061ms)
-✔ flujo completo de un usuario (8561.8643ms)
+  ✔ 1 · vincula el equipo: el agente pide código, la persona aprueba, el agente recibe su token (1159.8524ms)
+  ✔ 2 · una nota escrita en Obsidian llega al servidor, pendiente de subir a GitHub (42.6824ms)
+  ✔ 3 · lo que se edita en la web baja al disco en la siguiente consulta (37.7326ms)
+  ✔ 4 · una edición local posterior sube como versión 3, sin conflicto (36.2556ms)
+  ✔ 5 · si cambian los dos lados, nadie pisa a nadie: conflicto que resuelve una persona (61.0347ms)
+  ✔ 6 · el agente arranca solo, vigila la carpeta y sube una nota nueva (911.2793ms)
+  ✔ 7 · al desinstalar, el agente revoca su propio token y borra su configuración (853.6978ms)
+✔ flujo completo de un usuario (3306.5825ms)
 ▶ dónde guarda el agente sus datos
-  ✔ respeta DRIVESIDIAN_DATA_DIR (5.9553ms)
-  ✔ en Windows usa %APPDATA%\Drivesidian, no la carpeta del programa (2.3104ms)
-  ✔ fuera de Windows usa ~/.config/drivesidian (1.2404ms)
-✔ dónde guarda el agente sus datos (13.6118ms)
+  ✔ respeta DRIVESIDIAN_DATA_DIR (3.5527ms)
+  ✔ en Windows usa %APPDATA%\Drivesidian, no la carpeta del programa (1.1216ms)
+  ✔ fuera de Windows usa ~/.config/drivesidian (0.6223ms)
+✔ dónde guarda el agente sus datos (8.3117ms)
 ▶ índice de estado local
-  ✔ sin archivo previo arranca vacío y lo dice (dispara la reconciliación) (2.6199ms)
-  ✔ guarda hash y versión por nota, y sobrevive a un reinicio del agente (18.0071ms)
-  ✔ un índice corrupto se trata como ausente, sin tumbar al agente (7.3156ms)
-  ✔ si no puede guardar, lo registra en el log en vez de fallar (10.8672ms)
-✔ índice de estado local (39.6887ms)
+  ✔ sin archivo previo arranca vacío y lo dice (dispara la reconciliación) (1.4229ms)
+  ✔ guarda hash y versión por nota, y sobrevive a un reinicio del agente (12.3712ms)
+  ✔ un índice corrupto se trata como ausente, sin tumbar al agente (5.4132ms)
+  ✔ si no puede guardar, lo registra en el log en vez de fallar (7.8154ms)
+✔ índice de estado local (27.4704ms)
 ▶ configuración del agente
-  ✔ sin archivo apunta al servidor local de desarrollo (4.3606ms)
-  ✔ DRIVESIDIAN_API_URL gana sobre el archivo y se le quita la barra final (12.233ms)
-  ✔ lee la URL que dejó el instalador aunque venga con BOM (7.5248ms)
-  ✔ un config.json corrupto da un error claro (9.0084ms)
-  ✔ olvidar el token conserva el resto; borrar elimina el archivo (881.8307ms)
-  ✔ borra el config.json aunque la ruta tenga acentos (C:\Users\José) (10.4208ms)
-  ✔ guardar el token como null lo quita del archivo (1033.7049ms)
-✔ configuración del agente (1960.3168ms)
+  ✔ sin archivo apunta al servidor local de desarrollo (2.0701ms)
+  ✔ DRIVESIDIAN_API_URL gana sobre el archivo y se le quita la barra final (5.7986ms)
+  ✔ lee la URL que dejó el instalador aunque venga con BOM (6.518ms)
+  ✔ un config.json corrupto da un error claro (5.3167ms)
+  ✔ olvidar el token conserva el resto; borrar elimina el archivo (483.5977ms)
+  ✔ borra el config.json aunque la ruta tenga acentos (C:\Users\José) (4.4315ms)
+  ✔ guardar el token como null lo quita del archivo (442.501ms)
+✔ configuración del agente (950.975ms)
 ▶ token cifrado en disco
-  ✔ en Windows se cifra con DPAPI: el archivo nunca tiene el token en claro (1536.839ms)
-  ✔ un token que estaba en claro se migra a cifrado (1612.9863ms)
-  ✔ un blob de otra cuenta o de otro equipo no descifra: se trata como sin token (1379.3439ms)
-  ✔ sin DPAPI (fuera de Windows) queda en claro y se reporta como tal (8.8965ms)
-  ✔ si PowerShell falla al cifrar, guarda en claro y lo avisa en el log (12.7652ms)
-  ✔ pasa el token a PowerShell por stdin, nunca como argumento (5.7987ms)
-✔ token cifrado en disco (4558.545ms)
+  ✔ en Windows se cifra con DPAPI: el archivo nunca tiene el token en claro (891.1129ms)
+  ✔ un token que estaba en claro se migra a cifrado (876.1573ms)
+  ✔ un blob de otra cuenta o de otro equipo no descifra: se trata como sin token (540.4794ms)
+  ✔ sin DPAPI (fuera de Windows) queda en claro y se reporta como tal (4.9648ms)
+  ✔ si PowerShell falla al cifrar, guarda en claro y lo avisa en el log (4.8002ms)
+  ✔ pasa el token a PowerShell por stdin, nunca como argumento (3.2588ms)
+✔ token cifrado en disco (2322.1982ms)
 ▶ log a disco
-  ✔ escribe cada línea en agent.log y rota el archivo al pasar de 5 MB (29.3418ms)
-✔ log a disco (29.6053ms)
+  ✔ escribe cada línea en agent.log y rota el archivo al pasar de 5 MB (14.6395ms)
+✔ log a disco (14.77ms)
 ▶ cola de subida
-  ✔ manda la nota con el token y apunta en el índice la versión que confirmó el servidor (104.0609ms)
-  ✔ manda base_version cuando conoce la nota (27.6405ms)
-  ✔ ante un conflicto (409) no decide nada y no vuelve a insistir con ese contenido (23.7004ms)
-  ✔ si revocaron el token (401), se detiene, vacía la cola y avisa (15.4398ms)
-  ✔ un 400 descarta la nota en vez de reintentarla para siempre (16.3837ms)
-  ✔ un 403 descarta la nota en vez de reintentarla para siempre (14.4374ms)
-  ✔ un 413 descarta la nota en vez de reintentarla para siempre (14.8395ms)
-  ✔ sin red reintenta con espera creciente hasta que el servidor vuelve (16.3207ms)
-  ✔ con 429 espera lo que diga Retry-After (15.3952ms)
-  ✔ con un error del servidor (500) reintenta (35.8503ms)
-  ✔ si la nota se edita mientras se envía, manda la versión nueva después (51.2857ms)
-✔ cola de subida (344.0192ms)
+  ✔ manda la nota con el token y apunta en el índice la versión que confirmó el servidor (56.788ms)
+  ✔ manda base_version cuando conoce la nota (21.6283ms)
+  ✔ ante un conflicto (409) no decide nada y no vuelve a insistir con ese contenido (15.3668ms)
+  ✔ si revocaron el token (401), se detiene, vacía la cola y avisa (15.2827ms)
+  ✔ un 400 descarta la nota en vez de reintentarla para siempre (15.2082ms)
+  ✔ un 403 descarta la nota en vez de reintentarla para siempre (14.8308ms)
+  ✔ un 413 descarta la nota en vez de reintentarla para siempre (15.5836ms)
+  ✔ sin red reintenta con espera creciente hasta que el servidor vuelve (7.691ms)
+  ✔ con 429 espera lo que diga Retry-After (8.9791ms)
+  ✔ con un error del servidor (500) reintenta (6.7323ms)
+  ✔ si la nota se edita mientras se envía, manda la versión nueva después (22.6076ms)
+✔ cola de subida (204.8752ms)
 ▶ consulta de cambios
-  ✔ pide desde el cursor que dio el servidor (5.0181ms)
-  ✔ devuelve null sin red o con error, y avisa si el token fue revocado (2.9356ms)
-✔ consulta de cambios (8.5873ms)
+  ✔ pide desde el cursor que dio el servidor (2.5949ms)
+  ✔ devuelve null sin red o con error, y avisa si el token fue revocado (1.8552ms)
+✔ consulta de cambios (4.7034ms)
 ▶ bajada al disco
-  ✔ apunta el hash en el índice ANTES de escribir, para no reportar su propia escritura (64.5723ms)
-  ✔ escribe lo nuevo, no pisa lo que el usuario cambió y no reescribe lo que ya coincide (34.3045ms)
-  ✔ lista solo las notas .md de la carpeta sincronizada, sin .obsidian ni .trash (20.9608ms)
-✔ bajada al disco (121.7336ms)
+  ✔ apunta el hash en el índice ANTES de escribir, para no reportar su propia escritura (14.7913ms)
+  ✔ escribe lo nuevo, no pisa lo que el usuario cambió y no reescribe lo que ya coincide (18.9336ms)
+  ✔ lista solo las notas .md de la carpeta sincronizada, sin .obsidian ni .trash (11.1832ms)
+✔ bajada al disco (45.2568ms)
 ▶ reconciliación de un agente sin índice
-  ✔ trae lo que falta, registra lo que coincide, y sube lo distinto y lo nuevo sin pisar nada (50.5193ms)
-  ✔ si el servidor no responde, conserva el cursor que tenía (7.6163ms)
-✔ reconciliación de un agente sin índice (58.876ms)
+  ✔ trae lo que falta, registra lo que coincide, y sube lo distinto y lo nuevo sin pisar nada (21.0212ms)
+  ✔ si el servidor no responde, conserva el cursor que tenía (3.8121ms)
+✔ reconciliación de un agente sin índice (25.11ms)
 ▶ bucle de bajada
-  ✔ consulta al arrancar y luego en cada intervalo, sin solaparse (85.0319ms)
-  ✔ un error al aplicar se registra y no tumba el bucle (29.2667ms)
-✔ bucle de bajada (114.9537ms)
+  ✔ consulta al arrancar y luego en cada intervalo, sin solaparse (64.881ms)
+  ✔ un error al aplicar se registra y no tumba el bucle (14.7529ms)
+✔ bucle de bajada (80.0813ms)
 ▶ detección del vault de Obsidian
-  ✔ busca el registro de Obsidian en la carpeta de cada sistema (17.2655ms)
-  ✔ descarta vaults que ya no existen y ordena por el último abierto (25.7579ms)
-  ✔ sin Obsidian instalado o con un registro dañado no hay vaults (19.1278ms)
-  ✔ crea la carpeta Drivesidian dentro del vault (8.4852ms)
-✔ detección del vault de Obsidian (75.0555ms)
+  ✔ busca el registro de Obsidian en la carpeta de cada sistema (3.4856ms)
+  ✔ descarta vaults que ya no existen y ordena por el último abierto (10.351ms)
+  ✔ sin Obsidian instalado o con un registro dañado no hay vaults (6.2421ms)
+  ✔ crea la carpeta Drivesidian dentro del vault (3.0083ms)
+✔ detección del vault de Obsidian (25.1002ms)
 ▶ vinculación del equipo
-  ✔ pide un código con el HASH del secreto, abre el navegador y canjea con el secreto (3363.0575ms)
-  ✔ si el servidor no manda vault y solo hay uno detectado, usa ese (1287.2097ms)
-  ✔ aprobado sin vault que usar es un error claro (21.0824ms)
-  ✔ un código caducado (410) o un error del servidor detienen la vinculación (44.0526ms)
-  ✔ tolera cortes de red y el límite de peticiones mientras espera (1007.7424ms)
-  ✔ si el servidor rechaza la solicitud, lo dice (8.8347ms)
-  ✔ si nadie aprueba antes de que caduque el código, se rinde (74.2124ms)
-  ✔ abre el navegador con el comando de cada sistema, sin pasar por la shell (7.8822ms)
-  ✔ si ni siquiera puede lanzar el proceso, devuelve false (4.0973ms)
-✔ vinculación del equipo (5820.1852ms)
+  ✔ pide un código con el HASH del secreto, abre el navegador y canjea con el secreto (1029.7962ms)
+  ✔ si el servidor no manda vault y solo hay uno detectado, usa ese (474.4442ms)
+  ✔ aprobado sin vault que usar es un error claro (15.8998ms)
+  ✔ un código caducado (410) o un error del servidor detienen la vinculación (29.9567ms)
+  ✔ tolera cortes de red y el límite de peticiones mientras espera (525.4849ms)
+  ✔ si el servidor rechaza la solicitud, lo dice (5.2414ms)
+  ✔ si nadie aprueba antes de que caduque el código, se rinde (72.9454ms)
+  ✔ abre el navegador con el comando de cada sistema, sin pasar por la shell (3.4221ms)
+  ✔ si ni siquiera puede lanzar el proceso, devuelve false (1.8743ms)
+✔ vinculación del equipo (2160.4161ms)
 ▶ vigilante de la carpeta
-  ✔ normaliza la ruta relativa con barras normales (1.5761ms)
-  ✔ reporta los .md nuevos y editados, e ignora su propia escritura y otros archivos (675.9997ms)
-✔ vigilante de la carpeta (678.7448ms)
+  ✔ normaliza la ruta relativa con barras normales (0.7439ms)
+  ✔ reporta los .md nuevos y editados, e ignora su propia escritura y otros archivos (567.6683ms)
+✔ vigilante de la carpeta (568.709ms)
 ℹ tests 63
 ℹ suites 14
 ℹ pass 63
@@ -96,7 +96,7 @@
 ℹ cancelled 0
 ℹ skipped 0
 ℹ todo 0
-ℹ duration_ms 26399.8796
+ℹ duration_ms 11439.1044
 ℹ start of coverage report
 ℹ ------------------------------------------------------------------------------------------------
 ℹ file            | line % | branch % | funcs % | uncovered lines
@@ -104,19 +104,19 @@
 ℹ src             |        |          |         | 
 ℹ  api.js         | 100.00 |    98.08 |   60.00 | 
 ℹ  config.js      | 100.00 |   100.00 |  100.00 | 
-ℹ  downstream.js  | 100.00 |    98.41 |  100.00 | 
+ℹ  downstream.js  | 100.00 |    96.55 |  100.00 | 
 ℹ  index.js       |  62.89 |    25.00 |   14.29 | 17-18 30-33 38-41 45-54 61-66 78-82 86-88 95-96
 ℹ  log.js         |  96.00 |    94.44 |  100.00 | 26-27
 ℹ  pairing.js     | 100.00 |    97.14 |   85.71 | 
 ℹ  paths.js       | 100.00 |    77.78 |  100.00 | 
 ℹ  secureStore.js | 100.00 |    90.00 |  100.00 | 
 ℹ  stateIndex.js  | 100.00 |    95.65 |  100.00 | 
-ℹ  unpair.js      |  87.80 |    50.00 |   66.67 | 18 27 29-31
+ℹ  unpair.js      |  89.80 |    40.00 |   50.00 | 22 32 34-36
 ℹ  vaultDetect.js | 100.00 |    85.71 |  100.00 | 
 ℹ  watcher.js     |  95.06 |    85.71 |   85.71 | 46-49
 ℹ ------------------------------------------------------------------------------------------------
-ℹ all files       |  96.19 |    92.41 |   84.71 | 
+ℹ all files       |  96.21 |    91.90 |   84.52 | 
 ℹ ------------------------------------------------------------------------------------------------
 ℹ end of coverage report
-(node:19964) MaxListenersExceededWarning: Possible EventEmitter memory leak detected. 11 end listeners added to [TestsStream]. MaxListeners is 10. Use emitter.setMaxListeners() to increase limit
+(node:19404) MaxListenersExceededWarning: Possible EventEmitter memory leak detected. 11 end listeners added to [TestsStream]. MaxListeners is 10. Use emitter.setMaxListeners() to increase limit
 (Use `node --trace-warnings ...` to show where the warning was created)
