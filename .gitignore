@@ -153,3 +153,6 @@ installer/icono.ico
 
 # Documentación generada
 docs/entregables
+
+# Script local para reinstalar el agente desde cero
+reiniciar-agente.ps1
