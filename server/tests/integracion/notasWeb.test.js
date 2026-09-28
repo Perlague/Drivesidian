@@ -52,13 +52,87 @@ describe('crear notas desde el panel', () => {
   });
 });
 
+describe('lista paginada', () => {
+  let carla;
+  let cookieCarla;
+  const ids = [];
+
+  before(async () => {
+    carla = await crearUsuario({ email: 'carla@ejemplo.com' });
+    cookieCarla = cookieDeSesion(carla);
+    for (let i = 1; i <= 7; i++) {
+      ids.push((await crear(cookieCarla, `nota-${i}`)).body.data.id);
+    }
+  });
+
+  const pagina = (query) => pedir('GET', `/api/notes${query}`, { cookie: cookieCarla });
+
+  it('reparte las notas en páginas sin repetir ni perder ninguna', async () => {
+    const vistas = [];
+    for (const [numero, esperadas] of [[1, 3], [2, 3], [3, 1]]) {
+      const { status, body } = await pagina(`?page=${numero}&limit=3`);
+      assert.equal(status, 200);
+      assert.equal(body.data.notes.length, esperadas);
+      assert.equal(body.data.page, numero);
+      assert.equal(body.data.pages, 3);
+      assert.equal(body.data.total, 7);
+      vistas.push(...body.data.notes.map((n) => n.id));
+    }
+    assert.deepEqual([...vistas].sort(), [...ids].sort());
+  });
+
+  it('sin parámetros devuelve la primera página de 25', async () => {
+    const { body } = await pagina('');
+    assert.equal(body.data.page, 1);
+    assert.equal(body.data.limit, 25);
+    assert.equal(body.data.notes.length, 7);
+  });
+
+  it('una página fuera de rango responde vacía, con el número real de páginas', async () => {
+    const { status, body } = await pagina('?page=9&limit=3');
+    assert.equal(status, 200);
+    assert.deepEqual(body.data.notes, []);
+    assert.equal(body.data.pages, 3);
+  });
+
+  it('los conteos cubren todas las notas, no solo la página', async () => {
+    await pool.query("UPDATE notes SET sync_status = 'synced' WHERE id = ANY($1)", [ids.slice(0, 4)]);
+    const { body } = await pagina('?page=3&limit=3');
+    assert.equal(body.data.notes.length, 1);
+    assert.equal(body.data.total, 7);
+    assert.equal(body.data.pending, 3);
+    assert.equal(body.data.conflicts, 0);
+  });
+
+  it('las notas en conflicto van primero, aunque sean las más viejas', async () => {
+    const vieja = ids[0];
+    await pool.query("UPDATE notes SET conflict_content = 'otra' WHERE id = $1", [vieja]);
+    const { body } = await pagina('?page=1&limit=3');
+    assert.equal(body.data.notes[0].id, vieja);
+    assert.equal(body.data.notes[0].in_conflict, true);
+    assert.equal(body.data.conflicts, 1);
+  });
+
+  it('rechaza page y limit inválidos con 400, no con 500', async () => {
+    for (const query of ['?page=0', '?page=abc', '?page=1.5', '?limit=101', '?limit=0', '?page=99999999999999999999']) {
+      assert.equal((await pagina(query)).status, 400, query);
+    }
+  });
+
+  it('cada usuario solo cuenta y ve sus notas', async () => {
+    const { body } = await pedir('GET', '/api/notes?limit=100', { cookie: cookieBob });
+    assert.equal(body.data.total, body.data.notes.length);
+    assert.ok(body.data.notes.every((n) => !ids.includes(n.id)));
+  });
+});
+
 describe('leer y listar', () => {
   it('la lista no arrastra el contenido de las notas', async () => {
     const res = await pedir('GET', '/api/notes', { cookie: cookieAna });
     assert.equal(res.status, 200);
-    assert.ok(res.body.data.length >= 1);
-    assert.equal(res.body.data[0].content, undefined);
-    assert.equal(res.body.data[0].in_conflict, false);
+    assert.ok(res.body.data.notes.length >= 1);
+    assert.equal(res.body.data.notes[0].content, undefined);
+    assert.equal(res.body.data.notes[0].in_conflict, false);
   });
 
   it('una nota ajena responde 404, no 403: no se confirma que exista', async () => {
@@ -136,7 +210,7 @@ describe('conflictos entre la web y el disco', () => {
   it('la lista marca las notas que necesitan atención', async () => {
     const id = await enConflicto();
     const { body } = await pedir('GET', '/api/notes', { cookie: cookieAna });
-    assert.equal(body.data.find((n) => n.id === id).in_conflict, true);
+    assert.equal(body.data.notes.find((n) => n.id === id).in_conflict, true);
   });
 
   it('conservar la del servidor descarta la del disco sin cambiar la versión', async () => {

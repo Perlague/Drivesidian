@@ -156,3 +156,4 @@ docs/entregables
 
 # Script local para reinstalar el agente desde cero
 reiniciar-agente.ps1
+modo-demo.ps1

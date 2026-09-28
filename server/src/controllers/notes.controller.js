@@ -5,6 +5,7 @@ const { updateSchema } = require('../schemas/notes/update');
 const { changesQuerySchema } = require('../schemas/notes/changes');
 const { resolveSchema } = require('../schemas/notes/resolve');
 const { createSchema } = require('../schemas/notes/create');
+const { listQuerySchema } = require('../schemas/notes/listQuery');
 const notesModel = require('../models/notes.model');
 const { success, error, validationError, conflict } = require('../utils/response');
 const { esIdValido } = require('../utils/id');
@@ -181,14 +182,35 @@ const resolve = async (req, res) => {
   success(res, resuelta);
 };
 
-// GET /api/notes — exclusivo de la web.
+// GET /api/notes?page=&limit= — exclusivo de la web, paginado.
+//
+// Devuelve la página y los conteos de TODAS las notas del usuario: el resumen
+// de la lista ("3 pendientes, 1 en conflicto") no se puede sacar de una página.
+// Una página fuera de rango responde 200 con `notes` vacío y `pages` real, para
+// que el navegador salte a la última en vez de mostrar un error.
 const list = async (req, res) => {
   if (req.auth.type !== 'user') {
     return error(res, 'Este endpoint es exclusivo de la sesión web.', 403);
   }
 
-  const notes = await notesModel.findAllByUser(req.auth.userId);
-  success(res, notes);
+  const parsed = listQuerySchema.safeParse(req.query);
+  if (!parsed.success) {
+    return validationError(res, parsed.error);
+  }
+  const { page, limit } = parsed.data;
+
+  const [notes, resumen] = await Promise.all([
+    notesModel.findAllByUser(req.auth.userId, { limit, offset: (page - 1) * limit }),
+    notesModel.summarizeByUser(req.auth.userId),
+  ]);
+
+  success(res, {
+    notes,
+    page,
+    limit,
+    pages: Math.max(1, Math.ceil(resumen.total / limit)),
+    ...resumen,
+  });
 };
 
 // GET /api/notes/:id — exclusivo de la web.

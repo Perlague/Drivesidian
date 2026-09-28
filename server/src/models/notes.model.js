@@ -195,18 +195,39 @@ const countByUser = async (userId) => {
   return result.rows[0].total;
 };
 
-const findAllByUser = async (userId) => {
+const findAllByUser = async (userId, { limit, offset }) => {
   const result = await pool.query(
     // in_conflict como booleano derivado: la lista puede resaltar las notas que
     // necesitan atención sin arrastrar una segunda copia del contenido.
+    //
+    // Las notas en conflicto van primero: con la lista paginada, una en la
+    // página 3 quedaría fuera de la vista, y es lo único que exige una
+    // decisión. El id desempata para que dos notas con el mismo updated_at no
+    // salten de una página a otra entre consultas.
     `SELECT id, vault_path, version, sync_status, updated_at,
             (conflict_content IS NOT NULL) AS in_conflict
      FROM notes
      WHERE user_id = $1
-     ORDER BY updated_at DESC`,
-    [userId],
+     ORDER BY (conflict_content IS NOT NULL) DESC, updated_at DESC, id DESC
+     LIMIT $2 OFFSET $3`,
+    [userId, limit, offset],
   );
   return result.rows;
+};
+
+// Los conteos del resumen de la lista. Van aparte porque la página solo trae
+// una parte de las notas: calcularlos en el navegador a partir de ella daría
+// "25 notas" cuando hay 300.
+const summarizeByUser = async (userId) => {
+  const result = await pool.query(
+    `SELECT count(*)::int AS total,
+            count(*) FILTER (WHERE sync_status = 'pending')::int AS pending,
+            count(*) FILTER (WHERE conflict_content IS NOT NULL)::int AS conflicts
+     FROM notes
+     WHERE user_id = $1`,
+    [userId],
+  );
+  return result.rows[0];
 };
 
 const findByIdForUser = async (id, userId) => {
@@ -297,6 +318,7 @@ module.exports = {
   resolveKeepLocal,
   countByUser,
   findAllByUser,
+  summarizeByUser,
   findByIdForUser,
   findByVaultPath,
   updateWithVersionCheck,
