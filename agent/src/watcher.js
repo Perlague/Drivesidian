@@ -11,7 +11,9 @@ const { SYNCED_FOLDER } = require('./paths');
 // escribir), así que un evento por sí solo no significa que el archivo esté
 // completo. awaitWriteFinish espera a que deje de crecer antes de avisar, que
 // es más fiable que un debounce a mano: mide el archivo, no el reloj.
-const ESTABILIDAD_MS = 2000;
+//
+// Configurable solo para que las pruebas no esperen dos segundos por archivo.
+const ESTABILIDAD_MS = Number(process.env.DRIVESIDIAN_WRITE_STABILITY_MS) || 2000;
 
 // vault_path se manda SIEMPRE con barras normales, aunque el agente corra en
 // Windows. Es lo que acaba siendo la ruta dentro del repo de GitHub.

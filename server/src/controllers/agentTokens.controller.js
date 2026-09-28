@@ -4,6 +4,7 @@ const crypto = require('crypto');
 const agentTokensModel = require('../models/agentTokens.model');
 const { sign } = require('../utils/jwt');
 const { success, error } = require('../utils/response');
+const { esIdValido } = require('../utils/id');
 const { logSecurityEvent, SEVERITY, EVENTS } = require('../utils/securityLog');
 const { AGENT_SCOPES } = require('../config');
 
@@ -66,7 +67,7 @@ const revoke = async (req, res) => {
   if (req.auth.type !== 'user') {
     return error(res, 'Este endpoint es exclusivo de la sesión web.', 403);
   }
-  if (!/^\d+$/.test(req.params.id)) {
+  if (!esIdValido(req.params.id)) {
     return error(res, 'id inválido.', 400);
   }
 

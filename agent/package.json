@@ -7,7 +7,8 @@
   "type": "commonjs",
   "scripts": {
     "start": "node src/index.js",
-    "unpair": "node src/unpair.js"
+    "unpair": "node src/unpair.js",
+    "test": "node tests/correr.js"
   },
   "engines": {
     "node": ">=20"

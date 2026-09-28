@@ -116,9 +116,16 @@ const olvidarToken = () => {
   escribir(actual);
 };
 
+// unlinkSync y NO rmSync: con Node 24 en Windows, rmSync no borra nada si la
+// ruta tiene caracteres no ASCII —C:\Users\José\AppData\...— y además no lanza
+// ningún error. Verificado. El desinstalador llama a esta función, así que un
+// usuario con acento en su nombre se quedaba con su config.json en disco.
 const borrar = () => {
-  const ruta = configFile();
-  if (fs.existsSync(ruta)) fs.rmSync(ruta);
+  try {
+    fs.unlinkSync(configFile());
+  } catch (err) {
+    if (err.code !== 'ENOENT') throw err;
+  }
 };
 
 module.exports = {

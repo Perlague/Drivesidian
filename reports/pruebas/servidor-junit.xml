@@ -1,0 +1,307 @@
+<?xml version="1.0" encoding="utf-8"?>
+<testsuites>
+	<testsuite name="bloqueo por fuerza bruta al segundo factor" time="1.068815" disabled="0" errors="0" tests="4" failures="0" skipped="0" hostname="drivesidian">
+		<testcase name="cuenta cada código incorrecto y bloquea al quinto con un evento crítico" time="0.642047" classname="test" file="server\tests\integracion\bloqueo2fa.test.js"/>
+		<testcase name="mientras dura el bloqueo, ni el código correcto entra" time="0.078309" classname="test" file="server\tests\integracion\bloqueo2fa.test.js"/>
+		<testcase name="el bloqueo dura 15 minutos" time="0.002823" classname="test" file="server\tests\integracion\bloqueo2fa.test.js"/>
+		<testcase name="pasado el bloqueo, el código correcto entra y el contador vuelve a cero" time="0.086002" classname="test" file="server\tests\integracion\bloqueo2fa.test.js"/>
+	</testsuite>
+	<testsuite name="inyección SQL" time="0.629123" disabled="0" errors="0" tests="5" failures="0" skipped="0" hostname="drivesidian">
+		<testcase name="una ruta de nota maliciosa se guarda como texto y las tablas siguen ahí" time="0.274309" classname="test" file="server\tests\integracion\inyeccion.test.js"/>
+		<testcase name="en el login no abre ninguna cuenta" time="0.012855" classname="test" file="server\tests\integracion\inyeccion.test.js"/>
+		<testcase name="en un id de la URL se rechaza antes de llegar a la base" time="0.009707" classname="test" file="server\tests\integracion\inyeccion.test.js"/>
+		<testcase name="en los filtros del panel de administración no devuelve de más" time="0.019600" classname="test" file="server\tests\integracion\inyeccion.test.js"/>
+		<testcase name="en el nombre de una nota creada desde la web" time="0.024170" classname="test" file="server\tests\integracion\inyeccion.test.js"/>
+	</testsuite>
+	<testsuite name="ids fuera de rango" time="0.041034" disabled="0" errors="0" tests="2" failures="0" skipped="0" hostname="drivesidian">
+		<testcase name="en las rutas del panel responde 400, nunca 500" time="0.021355" classname="test" file="server\tests\integracion\inyeccion.test.js"/>
+		<testcase name="en el cursor de la bajada responde 400" time="0.019112" classname="test" file="server\tests\integracion\inyeccion.test.js"/>
+	</testsuite>
+	<testsuite name="path traversal" time="0.040514" disabled="0" errors="0" tests="1" failures="0" skipped="0" hostname="drivesidian">
+		<testcase name="una nota con ../ no escribe fuera de la carpeta del usuario en GitHub" time="0.039920" classname="test" file="server\tests\integracion\inyeccion.test.js"/>
+	</testsuite>
+	<testsuite name="límites de uso" time="3.398607" disabled="0" errors="0" tests="4" failures="0" skipped="0" hostname="drivesidian">
+		<testcase name="login: 10 intentos por minuto por IP, y una sola línea en el feed con el conteo" time="0.553541" classname="test" file="server\tests\integracion\limites.test.js"/>
+		<testcase name="&amp;quot;sincronizar ahora&amp;quot;: 5 por minuto por usuario" time="0.151630" classname="test" file="server\tests\integracion\limites.test.js"/>
+		<testcase name="token de agente: 300 peticiones por hora por token, no por IP" time="2.332082" classname="test" file="server\tests\integracion\limites.test.js"/>
+		<testcase name="pedir códigos de vinculación: 20 por hora por IP" time="0.192358" classname="test" file="server\tests\integracion\limites.test.js"/>
+	</testsuite>
+	<testsuite name="subida desde el disco" time="0.491608" disabled="0" errors="0" tests="8" failures="0" skipped="0" hostname="drivesidian">
+		<testcase name="una ruta nueva se crea en versión 1" time="0.141438" classname="test" file="server\tests\integracion\notasAgente.test.js"/>
+		<testcase name="el mismo contenido no hace nada: evita resubir el vault en cada arranque" time="0.015064" classname="test" file="server\tests\integracion\notasAgente.test.js"/>
+		<testcase name="partiendo de la versión actual, sobrescribe y sube la versión" time="0.013544" classname="test" file="server\tests\integracion\notasAgente.test.js"/>
+		<testcase name="partiendo de una versión vieja, es conflicto: guarda lo del disco aparte y no pisa" time="0.017825" classname="test" file="server\tests\integracion\notasAgente.test.js"/>
+		<testcase name="sin base_version sobre una nota existente también es conflicto (agente sin índice)" time="0.026535" classname="test" file="server\tests\integracion\notasAgente.test.js"/>
+		<testcase name="si el disco vuelve a coincidir con el servidor, el conflicto se limpia solo" time="0.012505" classname="test" file="server\tests\integracion\notasAgente.test.js"/>
+		<testcase name="valida el cuerpo" time="0.019416" classname="test" file="server\tests\integracion\notasAgente.test.js"/>
+		<testcase name="una sesión web no puede usar los endpoints del agente" time="0.009694" classname="test" file="server\tests\integracion\notasAgente.test.js"/>
+	</testsuite>
+	<testsuite name="bajada al disco" time="0.423039" disabled="0" errors="0" tests="4" failures="0" skipped="0" hostname="drivesidian">
+		<testcase name="devuelve las notas cambiadas con un cursor del servidor, sin las que están en conflicto" time="0.014931" classname="test" file="server\tests\integracion\notasAgente.test.js"/>
+		<testcase name="con el cursor ya no repite lo que entregó" time="0.014873" classname="test" file="server\tests\integracion\notasAgente.test.js"/>
+		<testcase name="valida el cursor" time="0.009518" classname="test" file="server\tests\integracion\notasAgente.test.js"/>
+		<testcase name="pedir 100 notas o más de golpe se reporta UNA vez por hora como lectura masiva" time="0.383035" classname="test" file="server\tests\integracion\notasAgente.test.js"/>
+	</testsuite>
+	<testsuite name="cuota desde el agente" time="0.236166" disabled="0" errors="0" tests="1" failures="0" skipped="0" hostname="drivesidian">
+		<testcase name="una ruta nueva con la cuota llena se rechaza, pero editar una existente sigue funcionando" time="0.235848" classname="test" file="server\tests\integracion\notasAgente.test.js"/>
+	</testsuite>
+	<testsuite name="tokens de agente en la autenticación" time="0.069818" disabled="0" errors="0" tests="5" failures="0" skipped="0" hostname="drivesidian">
+		<testcase name="un token de solo lectura puede bajar pero no subir" time="0.015111" classname="test" file="server\tests\integracion\notasAgente.test.js"/>
+		<testcase name="un token sin alcances se rechaza y pide volver a vincular" time="0.003879" classname="test" file="server\tests\integracion\notasAgente.test.js"/>
+		<testcase name="un token revocado se rechaza y dispara un evento CRÍTICO" time="0.043460" classname="test" file="server\tests\integracion\notasAgente.test.js"/>
+		<testcase name="un token válido de otro usuario (userId alterado) no pasa: la firma lo delata" time="0.003913" classname="test" file="server\tests\integracion\notasAgente.test.js"/>
+		<testcase name="registra el último uso del token para verlo en el panel" time="0.002756" classname="test" file="server\tests\integracion\notasAgente.test.js"/>
+	</testsuite>
+	<testsuite name="crear notas desde el panel" time="0.581815" disabled="0" errors="0" tests="3" failures="0" skipped="0" hostname="drivesidian">
+		<testcase name="la crea dentro de la carpeta sincronizada, en versión 1 y pendiente de subir" time="0.185613" classname="test" file="server\tests\integracion\notasWeb.test.js"/>
+		<testcase name="no pisa una nota que ya existe con ese nombre" time="0.020988" classname="test" file="server\tests\integracion\notasWeb.test.js"/>
+		<testcase name="rechaza nombres inválidos y contenido de más de 1 MiB (medido en bytes)" time="0.053540" classname="test" file="server\tests\integracion\notasWeb.test.js"/>
+	</testsuite>
+	<testsuite name="leer y listar" time="0.101763" disabled="0" errors="0" tests="4" failures="0" skipped="0" hostname="drivesidian">
+		<testcase name="la lista no arrastra el contenido de las notas" time="0.017610" classname="test" file="server\tests\integracion\notasWeb.test.js"/>
+		<testcase name="una nota ajena responde 404, no 403: no se confirma que exista" time="0.025018" classname="test" file="server\tests\integracion\notasWeb.test.js"/>
+		<testcase name="un id que no es número responde 400" time="0.003977" classname="test" file="server\tests\integracion\notasWeb.test.js"/>
+		<testcase name="un token de agente no puede usar los endpoints del panel" time="0.054413" classname="test" file="server\tests\integracion\notasWeb.test.js"/>
+	</testsuite>
+	<testsuite name="edición con control de versión" time="0.069559" disabled="0" errors="0" tests="3" failures="0" skipped="0" hostname="drivesidian">
+		<testcase name="guarda si se parte de la versión actual y la sube en uno" time="0.023155" classname="test" file="server\tests\integracion\notasWeb.test.js"/>
+		<testcase name="si otro la cambió antes, responde 409 con las dos versiones y no pisa nada" time="0.027994" classname="test" file="server\tests\integracion\notasWeb.test.js"/>
+		<testcase name="valida el cuerpo y la propiedad de la nota" time="0.017911" classname="test" file="server\tests\integracion\notasWeb.test.js"/>
+	</testsuite>
+	<testsuite name="conflictos entre la web y el disco" time="0.091820" disabled="0" errors="0" tests="5" failures="0" skipped="0" hostname="drivesidian">
+		<testcase name="se niega a editar una nota en conflicto hasta resolverlo" time="0.015037" classname="test" file="server\tests\integracion\notasWeb.test.js"/>
+		<testcase name="la lista marca las notas que necesitan atención" time="0.016574" classname="test" file="server\tests\integracion\notasWeb.test.js"/>
+		<testcase name="conservar la del servidor descarta la del disco sin cambiar la versión" time="0.021275" classname="test" file="server\tests\integracion\notasWeb.test.js"/>
+		<testcase name="conservar la del disco la vuelve la versión del servidor y la reencola" time="0.015925" classname="test" file="server\tests\integracion\notasWeb.test.js"/>
+		<testcase name="valida la elección y la propiedad" time="0.022367" classname="test" file="server\tests\integracion\notasWeb.test.js"/>
+	</testsuite>
+	<testsuite name="sincronizar ahora" time="0.108213" disabled="0" errors="0" tests="2" failures="0" skipped="0" hostname="drivesidian">
+		<testcase name="sube las pendientes del usuario sin esperar al ciclo" time="0.030412" classname="test" file="server\tests\integracion\notasWeb.test.js"/>
+		<testcase name="si ya hay una subida en curso responde 409" time="0.077246" classname="test" file="server\tests\integracion\notasWeb.test.js"/>
+	</testsuite>
+	<testsuite name="cuota de notas" time="0.276843" disabled="0" errors="0" tests="1" failures="0" skipped="0" hostname="drivesidian">
+		<testcase name="al llegar a 2000 notas no deja crear más y lo reporta" time="0.276575" classname="test" file="server\tests\integracion\notasWeb.test.js"/>
+	</testsuite>
+	<testsuite name="páginas del panel" time="0.649070" disabled="0" errors="0" tests="8" failures="0" skipped="0" hostname="drivesidian">
+		<testcase name="la raíz manda al login sin sesión y a las notas con ella" time="0.090818" classname="test" file="server\tests\integracion\paginas.test.js"/>
+		<testcase name="login y registro se muestran sin sesión y redirigen con ella" time="0.042785" classname="test" file="server\tests\integracion\paginas.test.js"/>
+		<testcase name="las páginas privadas mandan al login recordando el destino" time="0.003381" classname="test" file="server\tests\integracion\paginas.test.js"/>
+		<testcase name="con sesión, todas las páginas privadas cargan" time="0.055905" classname="test" file="server\tests\integracion\paginas.test.js"/>
+		<testcase name="ninguna página lleva scripts ni estilos en línea (la CSP no los permitiría)" time="0.074388" classname="test" file="server\tests\integracion\paginas.test.js"/>
+		<testcase name="la administración solo abre para el rol admin" time="0.014776" classname="test" file="server\tests\integracion\paginas.test.js"/>
+		<testcase name="cada respuesta lleva la política de seguridad de contenido" time="0.010152" classname="test" file="server\tests\integracion\paginas.test.js"/>
+		<testcase name="sirve los archivos estáticos y las librerías locales" time="0.012450" classname="test" file="server\tests\integracion\paginas.test.js"/>
+	</testsuite>
+	<testsuite name="errores" time="0.079088" disabled="0" errors="0" tests="5" failures="0" skipped="0" hostname="drivesidian">
+		<testcase name="health responde" time="0.004942" classname="test" file="server\tests\integracion\paginas.test.js"/>
+		<testcase name="una ruta de API desconocida responde JSON y una página desconocida, HTML" time="0.010308" classname="test" file="server\tests\integracion\paginas.test.js"/>
+		<testcase name="un cuerpo de más de 1200 kb se rechaza con 413 en JSON, sin la página de Express" time="0.021980" classname="test" file="server\tests\integracion\paginas.test.js"/>
+		<testcase name="un JSON mal formado responde 400" time="0.030811" classname="test" file="server\tests\integracion\paginas.test.js"/>
+		<testcase name="si la base de datos falla, responde 500 genérico sin filtrar detalles internos" time="0.010131" classname="test" file="server\tests\integracion\paginas.test.js"/>
+	</testsuite>
+	<testsuite name="tokens de agente desde el panel" time="0.545039" disabled="0" errors="0" tests="5" failures="0" skipped="0" hostname="drivesidian">
+		<testcase name="el token se muestra UNA vez; después solo se listan sus datos" time="0.154919" classname="test" file="server\tests\integracion\tokensAdmin.test.js"/>
+		<testcase name="revocarlo lo deja inservible al instante" time="0.042184" classname="test" file="server\tests\integracion\tokensAdmin.test.js"/>
+		<testcase name="nadie revoca tokens ajenos" time="0.017765" classname="test" file="server\tests\integracion\tokensAdmin.test.js"/>
+		<testcase name="un agente no crea, lista ni revoca tokens: solo puede autorrevocarse" time="0.025134" classname="test" file="server\tests\integracion\tokensAdmin.test.js"/>
+		<testcase name="el desinstalador revoca su propio token y ya no puede usarlo" time="0.022355" classname="test" file="server\tests\integracion\tokensAdmin.test.js"/>
+	</testsuite>
+	<testsuite name="administración" time="0.052696" disabled="0" errors="0" tests="5" failures="0" skipped="0" hostname="drivesidian">
+		<testcase name="un usuario normal recibe 403 y queda registrado como authz.denied" time="0.010114" classname="test" file="server\tests\integracion\tokensAdmin.test.js"/>
+		<testcase name="el administrador lista usuarios sin ver hashes ni secretos" time="0.005957" classname="test" file="server\tests\integracion\tokensAdmin.test.js"/>
+		<testcase name="consulta eventos filtrando por tipo y severidad" time="0.020590" classname="test" file="server\tests\integracion\tokensAdmin.test.js"/>
+		<testcase name="valida los filtros" time="0.008415" classname="test" file="server\tests\integracion\tokensAdmin.test.js"/>
+		<testcase name="publica el catálogo cerrado de 20 tipos de evento" time="0.006767" classname="test" file="server\tests\integracion\tokensAdmin.test.js"/>
+	</testsuite>
+	<testsuite name="registro" time="0.358383" disabled="0" errors="0" tests="4" failures="0" skipped="0" hostname="drivesidian">
+		<testcase name="crea la cuenta y no devuelve el hash de la contraseña" time="0.190204" classname="test" file="server\tests\integracion\usuarios.test.js"/>
+		<testcase name="rechaza un correo repetido con 409" time="0.010749" classname="test" file="server\tests\integracion\usuarios.test.js"/>
+		<testcase name="valida el cuerpo con mensajes por campo" time="0.008870" classname="test" file="server\tests\integracion\usuarios.test.js"/>
+		<testcase name="guarda la contraseña con scrypt, nunca en claro" time="0.003513" classname="test" file="server\tests\integracion\usuarios.test.js"/>
+	</testsuite>
+	<testsuite name="inicio de sesión" time="0.208978" disabled="0" errors="0" tests="4" failures="0" skipped="0" hostname="drivesidian">
+		<testcase name="un correo inexistente responde igual que una contraseña mala (no enumera cuentas)" time="0.015008" classname="test" file="server\tests\integracion\usuarios.test.js"/>
+		<testcase name="una contraseña mala responde 401 con el mismo mensaje" time="0.096173" classname="test" file="server\tests\integracion\usuarios.test.js"/>
+		<testcase name="con las credenciales correctas deja una cookie httpOnly y SameSite=Lax" time="0.092925" classname="test" file="server\tests\integracion\usuarios.test.js"/>
+		<testcase name="valida el cuerpo del login" time="0.003751" classname="test" file="server\tests\integracion\usuarios.test.js"/>
+	</testsuite>
+	<testsuite name="cuenta y preferencias" time="0.349981" disabled="0" errors="0" tests="5" failures="0" skipped="0" hostname="drivesidian">
+		<testcase name="/me devuelve el perfil, el topic de ntfy y su QR, sin secretos" time="0.152925" classname="test" file="server\tests\integracion\usuarios.test.js"/>
+		<testcase name="/me sin sesión responde 401" time="0.005289" classname="test" file="server\tests\integracion\usuarios.test.js"/>
+		<testcase name="/me de una cuenta que ya no existe responde 404" time="0.009259" classname="test" file="server\tests\integracion\usuarios.test.js"/>
+		<testcase name="activa y desactiva las notificaciones" time="0.083229" classname="test" file="server\tests\integracion\usuarios.test.js"/>
+		<testcase name="cerrar sesión borra la cookie" time="0.098471" classname="test" file="server\tests\integracion\usuarios.test.js"/>
+	</testsuite>
+	<testsuite name="enrolamiento del segundo factor" time="0.728174" disabled="0" errors="0" tests="5" failures="0" skipped="0" hostname="drivesidian">
+		<testcase name="entrega secreto, URI y QR, pero no guarda nada hasta confirmar" time="0.156245" classname="test" file="server\tests\integracion\usuarios.test.js"/>
+		<testcase name="un código incorrecto no activa el 2FA" time="0.159310" classname="test" file="server\tests\integracion\usuarios.test.js"/>
+		<testcase name="el código correcto activa el 2FA y guarda el secreto cifrado" time="0.217920" classname="test" file="server\tests\integracion\usuarios.test.js"/>
+		<testcase name="con 2FA activo el login pide el código y lo acepta" time="0.193877" classname="test" file="server\tests\integracion\usuarios.test.js"/>
+		<testcase name="el feed de seguridad nunca incluye la contraseña" time="0.000400" classname="test" file="server\tests\integracion\usuarios.test.js"/>
+	</testsuite>
+	<testsuite name="el agente pide un código" time="0.531790" disabled="0" errors="0" tests="4" failures="0" skipped="0" hostname="drivesidian">
+		<testcase name="recibe un código legible XXXX-XXXX, sin caracteres ambiguos, y la URL para abrir" time="0.139330" classname="test" file="server\tests\integracion\vinculacion.test.js"/>
+		<testcase name="valida lo que manda el agente" time="0.007545" classname="test" file="server\tests\integracion\vinculacion.test.js"/>
+		<testcase name="mientras nadie aprueba, la consulta dice &amp;quot;pendiente&amp;quot;" time="0.023281" classname="test" file="server\tests\integracion\vinculacion.test.js"/>
+		<testcase name="pide código y verifier, y rechaza un código inexistente" time="0.009250" classname="test" file="server\tests\integracion\vinculacion.test.js"/>
+	</testsuite>
+	<testsuite name="quien vio el código en pantalla no puede llevarse el token" time="0.018090" disabled="0" errors="0" tests="1" failures="0" skipped="0" hostname="drivesidian">
+		<testcase name="sin el secreto del agente, el canje se rechaza con un evento CRÍTICO" time="0.017772" classname="test" file="server\tests\integracion\vinculacion.test.js"/>
+	</testsuite>
+	<testsuite name="la persona aprueba desde el navegador" time="0.191087" disabled="0" errors="0" tests="8" failures="0" skipped="0" hostname="drivesidian">
+		<testcase name="sin segundo factor no puede vincular: 403 con código para que la web redirija" time="0.019769" classname="test" file="server\tests\integracion\vinculacion.test.js"/>
+		<testcase name="ve qué equipo pide vincularse, sin el hash del verifier" time="0.022682" classname="test" file="server\tests\integracion\vinculacion.test.js"/>
+		<testcase name="flujo completo: aprobar, canjear una sola vez, y el token funciona" time="0.064200" classname="test" file="server\tests\integracion\vinculacion.test.js"/>
+		<testcase name="no se aprueba dos veces el mismo código" time="0.027512" classname="test" file="server\tests\integracion\vinculacion.test.js"/>
+		<testcase name="con varios vaults hay que elegir uno de los que detectó el agente" time="0.029427" classname="test" file="server\tests\integracion\vinculacion.test.js"/>
+		<testcase name="valida el cuerpo y rechaza códigos inexistentes" time="0.011971" classname="test" file="server\tests\integracion\vinculacion.test.js"/>
+		<testcase name="un token de agente no puede aprobar vinculaciones" time="0.009561" classname="test" file="server\tests\integracion\vinculacion.test.js"/>
+		<testcase name="una sesión de una cuenta borrada no aprueba nada" time="0.005022" classname="test" file="server\tests\integracion\vinculacion.test.js"/>
+	</testsuite>
+	<testsuite name="los códigos caducan a los 10 minutos" time="0.061928" disabled="0" errors="0" tests="1" failures="0" skipped="0" hostname="drivesidian">
+		<testcase name="un código vencido no se canjea ni se aprueba" time="0.061727" classname="test" file="server\tests\integracion\vinculacion.test.js"/>
+	</testsuite>
+	<testsuite name="contraseñas con scrypt" time="0.264717" disabled="0" errors="0" tests="2" failures="0" skipped="0" hostname="drivesidian">
+		<testcase name="verifica la contraseña correcta y rechaza otra" time="0.159619" classname="test" file="server\tests\unit\criptografia.test.js"/>
+		<testcase name="usa una sal distinta cada vez: dos hashes de la misma clave no coinciden" time="0.102544" classname="test" file="server\tests\unit\criptografia.test.js"/>
+	</testsuite>
+	<testsuite name="cifrado del secreto 2FA con AES-256-GCM" time="0.003374" disabled="0" errors="0" tests="4" failures="0" skipped="0" hostname="drivesidian">
+		<testcase name="descifra lo que cifró" time="0.001367" classname="test" file="server\tests\unit\criptografia.test.js"/>
+		<testcase name="usa un IV aleatorio: el mismo secreto cifra distinto cada vez" time="0.000326" classname="test" file="server\tests\unit\criptografia.test.js"/>
+		<testcase name="detecta una alteración del texto cifrado gracias a la etiqueta de autenticación" time="0.000588" classname="test" file="server\tests\unit\criptografia.test.js"/>
+		<testcase name="no descifra con otra llave" time="0.000745" classname="test" file="server\tests\unit\criptografia.test.js"/>
+	</testsuite>
+	<testsuite name="topic de ntfy derivado por HMAC" time="0.001958" disabled="0" errors="0" tests="2" failures="0" skipped="0" hostname="drivesidian">
+		<testcase name="es estable para el mismo usuario y distinto entre usuarios" time="0.000981" classname="test" file="server\tests\unit\criptografia.test.js"/>
+		<testcase name="no se puede derivar sin el secreto del servidor" time="0.000763" classname="test" file="server\tests\unit\criptografia.test.js"/>
+	</testsuite>
+	<testsuite name="cliente de la Git Data API" time="0.063827" disabled="0" errors="0" tests="12" failures="0" skipped="0" hostname="drivesidian">
+		<testcase name="un lote vacío no llama a GitHub" time="0.002156" classname="test" file="server\tests\unit\github.test.js"/>
+		<testcase name="sube un lote en UN solo commit con cinco llamadas, lleve las notas que lleve" time="0.042439" classname="test" file="server\tests\unit\github.test.js"/>
+		<testcase name="se autentica con el token del servidor y manda User-Agent" time="0.002197" classname="test" file="server\tests\unit\github.test.js"/>
+		<testcase name="en un repositorio sin commits siembra el primero con la Contents API y sigue" time="0.002817" classname="test" file="server\tests\unit\github.test.js"/>
+		<testcase name="si otro commit movió la rama (422), relee la punta y reintenta" time="0.004331" classname="test" file="server\tests\unit\github.test.js"/>
+		<testcase name="se rinde tras tres intentos fallidos en el ref" time="0.003424" classname="test" file="server\tests\unit\github.test.js"/>
+		<testcase name="un error distinto de 422 al mover el ref no se reintenta" time="0.001213" classname="test" file="server\tests\unit\github.test.js"/>
+		<testcase name="propaga el error si falla crear el árbol" time="0.000827" classname="test" file="server\tests\unit\github.test.js"/>
+		<testcase name="propaga el error si falla leer la rama con algo que no es 404 ni 409" time="0.000465" classname="test" file="server\tests\unit\github.test.js"/>
+		<testcase name="una rama inexistente (404) cuenta como &amp;quot;sin punta&amp;quot;" time="0.000332" classname="test" file="server\tests\unit\github.test.js"/>
+		<testcase name="usa main si no se configuró rama" time="0.001042" classname="test" file="server\tests\unit\github.test.js"/>
+		<testcase name="codifica cada segmento de una rama anidada sin romper las barras" time="0.000142" classname="test" file="server\tests\unit\github.test.js"/>
+	</testsuite>
+	<testsuite name="cliente de ntfy" time="0.001058" disabled="0" errors="0" tests="2" failures="0" skipped="0" hostname="drivesidian">
+		<testcase name="publica en el topic del usuario" time="0.000511" classname="test" file="server\tests\unit\github.test.js"/>
+		<testcase name="falla si ntfy responde con error" time="0.000389" classname="test" file="server\tests\unit\github.test.js"/>
+	</testsuite>
+	<testsuite name="validación de ids" time="0.005002" disabled="0" errors="0" tests="3" failures="0" skipped="0" hostname="drivesidian">
+		<testcase name="acepta enteros positivos que caben en un bigint" time="0.001600" classname="test" file="server\tests\unit\id.test.js"/>
+		<testcase name="rechaza lo que no es un entero positivo o no cabe en un bigint" time="0.001220" classname="test" file="server\tests\unit\id.test.js"/>
+		<testcase name="el cursor admite además el 0 del principio" time="0.000277" classname="test" file="server\tests\unit\id.test.js"/>
+	</testsuite>
+	<testsuite name="JWT propio (HS256)" time="0.010179" disabled="0" errors="0" tests="10" failures="0" skipped="0" hostname="drivesidian">
+		<testcase name="firma y verifica un token válido" time="0.002528" classname="test" file="server\tests\unit\jwt.test.js"/>
+		<testcase name="sin tiempo de vida no pone exp: así son los tokens de agente" time="0.000275" classname="test" file="server\tests\unit\jwt.test.js"/>
+		<testcase name="rechaza un token firmado con otro secreto" time="0.000619" classname="test" file="server\tests\unit\jwt.test.js"/>
+		<testcase name="rechaza un token con el payload alterado" time="0.000567" classname="test" file="server\tests\unit\jwt.test.js"/>
+		<testcase name="rechaza alg &amp;quot;none&amp;quot; sin firma: la cabecera alg nunca se lee" time="0.000443" classname="test" file="server\tests\unit\jwt.test.js"/>
+		<testcase name="rechaza un token de alg &amp;quot;none&amp;quot; aunque traiga una firma inventada" time="0.000272" classname="test" file="server\tests\unit\jwt.test.js"/>
+		<testcase name="ignora la cabecera: un token con alg distinto pero firma HS256 correcta sigue siendo HS256" time="0.000273" classname="test" file="server\tests\unit\jwt.test.js"/>
+		<testcase name="rechaza un token expirado" time="0.002291" classname="test" file="server\tests\unit\jwt.test.js"/>
+		<testcase name="rechaza entradas mal formadas" time="0.000231" classname="test" file="server\tests\unit\jwt.test.js"/>
+		<testcase name="rechaza un payload que no es JSON aunque la firma sea correcta" time="0.000400" classname="test" file="server\tests\unit\jwt.test.js"/>
+	</testsuite>
+	<testsuite name="encabezados de seguridad" time="0.005243" disabled="0" errors="0" tests="2" failures="0" skipped="0" hostname="drivesidian">
+		<testcase name="pone una CSP estricta sin unsafe-inline ni orígenes externos" time="0.003044" classname="test" file="server\tests\unit\middleware.test.js"/>
+		<testcase name="manda HSTS solo sobre HTTPS, nunca por HTTP plano" time="0.000354" classname="test" file="server\tests\unit\middleware.test.js"/>
+	</testsuite>
+	<testsuite name="alcances del token de agente" time="0.002218" disabled="0" errors="0" tests="3" failures="0" skipped="0" hostname="drivesidian">
+		<testcase name="deja pasar a la sesión web: los alcances son solo del agente" time="0.000700" classname="test" file="server\tests\unit\middleware.test.js"/>
+		<testcase name="deja pasar a un token con el alcance pedido" time="0.000426" classname="test" file="server\tests\unit\middleware.test.js"/>
+		<testcase name="corta con 403 a un token sin ese alcance" time="0.000517" classname="test" file="server\tests\unit\middleware.test.js"/>
+	</testsuite>
+	<testsuite name="control por rol" time="0.017915" disabled="0" errors="0" tests="3" failures="0" skipped="0" hostname="drivesidian">
+		<testcase name="deja pasar al rol correcto" time="0.001799" classname="test" file="server\tests\unit\middleware.test.js"/>
+		<testcase name="responde 403 y emite authz.denied UNA vez por ventana, no una por intento" time="0.014453" classname="test" file="server\tests\unit\middleware.test.js"/>
+		<testcase name="en páginas redirige a /notes en vez de mostrar un error" time="0.001257" classname="test" file="server\tests\unit\middleware.test.js"/>
+	</testsuite>
+	<testsuite name="guardia de páginas" time="0.005359" disabled="0" errors="0" tests="4" failures="0" skipped="0" hostname="drivesidian">
+		<testcase name="solo acepta rutas internas como destino después del login (evita open redirect)" time="0.000468" classname="test" file="server\tests\unit\middleware.test.js"/>
+		<testcase name="sin sesión manda al login recordando a dónde iba" time="0.000733" classname="test" file="server\tests\unit\middleware.test.js"/>
+		<testcase name="un token de agente no abre páginas del panel" time="0.002009" classname="test" file="server\tests\unit\middleware.test.js"/>
+		<testcase name="con sesión web deja pasar y expone al usuario a la vista" time="0.001746" classname="test" file="server\tests\unit\middleware.test.js"/>
+	</testsuite>
+	<testsuite name="limitador de peticiones" time="0.005319" disabled="0" errors="0" tests="4" failures="0" skipped="0" hostname="drivesidian">
+		<testcase name="deja pasar hasta el tope, luego 429 con Retry-After, y un solo evento con el conteo" time="0.001533" classname="test" file="server\tests\unit\middleware.test.js"/>
+		<testcase name="cada clave tiene su propio contador" time="0.000729" classname="test" file="server\tests\unit\middleware.test.js"/>
+		<testcase name="ignora las peticiones sin clave" time="0.000330" classname="test" file="server\tests\unit\middleware.test.js"/>
+		<testcase name="la ventana se renueva al pasar el tiempo" time="0.001994" classname="test" file="server\tests\unit\middleware.test.js"/>
+	</testsuite>
+	<testsuite name="sesión y respuestas" time="0.007126" disabled="0" errors="0" tests="2" failures="0" skipped="0" hostname="drivesidian">
+		<testcase name="lee cookies y tokens por cabecera o por cookie" time="0.000368" classname="test" file="server\tests\unit\middleware.test.js"/>
+		<testcase name="da el mismo formato a éxitos, errores, validaciones y conflictos" time="0.006545" classname="test" file="server\tests\unit\middleware.test.js"/>
+	</testsuite>
+	<testsuite name="resolución de la URL pública" time="0.059697" disabled="0" errors="0" tests="8" failures="0" skipped="0" hostname="drivesidian">
+		<testcase name="PUBLIC_URL gana sobre todo lo demás y se le quita la barra final" time="0.003993" classname="test" file="server\tests\unit\publicUrl.test.js"/>
+		<testcase name="sin PUBLIC_URL pregunta al túnel de ngrok y prefiere el https" time="0.039050" classname="test" file="server\tests\unit\publicUrl.test.js"/>
+		<testcase name="sin túnel usa el dominio" time="0.000682" classname="test" file="server\tests\unit\publicUrl.test.js"/>
+		<testcase name="ignora respuestas raras de ngrok" time="0.001344" classname="test" file="server\tests\unit\publicUrl.test.js"/>
+		<testcase name="sin nada configurado cae a localhost; DOMAIN=localhost no cuenta como dominio" time="0.000592" classname="test" file="server\tests\unit\publicUrl.test.js"/>
+		<testcase name="al arrancar con PUBLIC_URL no espera a nadie" time="0.000865" classname="test" file="server\tests\unit\publicUrl.test.js"/>
+		<testcase name="sin ngrok configurado resuelve una sola vez" time="0.000759" classname="test" file="server\tests\unit\publicUrl.test.js"/>
+		<testcase name="con ngrok refresca la URL cada minuto y detecta que cambió" time="0.009973" classname="test" file="server\tests\unit\publicUrl.test.js"/>
+	</testsuite>
+	<testsuite name="carpeta de cada usuario en el repositorio compartido" time="0.004156" disabled="0" errors="0" tests="3" failures="0" skipped="0" hostname="drivesidian">
+		<testcase name="arma el slug desde la parte local del correo, sin acentos" time="0.001557" classname="test" file="server\tests\unit\rutas.test.js"/>
+		<testcase name="recorta el slug a 30 caracteres sin dejar un guion colgando" time="0.000283" classname="test" file="server\tests\unit\rutas.test.js"/>
+		<testcase name="usa solo el id si el correo no deja un slug útil" time="0.000205" classname="test" file="server\tests\unit\rutas.test.js"/>
+	</testsuite>
+	<testsuite name="saneamiento de rutas del vault (path traversal)" time="0.000676" disabled="0" errors="0" tests="2" failures="0" skipped="0" hostname="drivesidian">
+		<testcase name="descarta segmentos .. y . y normaliza barras de Windows" time="0.000300" classname="test" file="server\tests\unit\rutas.test.js"/>
+		<testcase name="una ruta maliciosa no puede salir de la carpeta del usuario" time="0.000195" classname="test" file="server\tests\unit\rutas.test.js"/>
+	</testsuite>
+	<testsuite name="nombre de una nota creada desde la web" time="0.000740" disabled="0" errors="0" tests="2" failures="0" skipped="0" hostname="drivesidian">
+		<testcase name="la mete en la carpeta sincronizada y le pone extensión .md" time="0.000305" classname="test" file="server\tests\unit\rutas.test.js"/>
+		<testcase name="rechaza nombres vacíos o que solo son la extensión" time="0.000263" classname="test" file="server\tests\unit\rutas.test.js"/>
+	</testsuite>
+	<testsuite name="TOTP propio (RFC 6238)" time="0.028321" disabled="0" errors="0" tests="9" failures="0" skipped="0" hostname="drivesidian">
+		<testcase name="coincide con el vector oficial del RFC en t=59" time="0.010005" classname="test" file="server\tests\unit\totp.test.js"/>
+		<testcase name="coincide con el vector oficial del RFC en t=1111111109" time="0.001268" classname="test" file="server\tests\unit\totp.test.js"/>
+		<testcase name="coincide con el vector oficial del RFC en t=1234567890" time="0.002021" classname="test" file="server\tests\unit\totp.test.js"/>
+		<testcase name="coincide con el vector oficial del RFC en t=2000000000" time="0.000567" classname="test" file="server\tests\unit\totp.test.js"/>
+		<testcase name="acepta el código actual y los de ±30 segundos por desfase de reloj" time="0.002530" classname="test" file="server\tests\unit\totp.test.js"/>
+		<testcase name="rechaza un código de hace más de un paso" time="0.002942" classname="test" file="server\tests\unit\totp.test.js"/>
+		<testcase name="rechaza formatos inválidos sin intentar calcular" time="0.000475" classname="test" file="server\tests\unit\totp.test.js"/>
+		<testcase name="genera secretos de 160 bits en base32 y distintos cada vez" time="0.000851" classname="test" file="server\tests\unit\totp.test.js"/>
+		<testcase name="arma la URI otpauth que leen las apps de autenticación" time="0.001043" classname="test" file="server\tests\unit\totp.test.js"/>
+	</testsuite>
+	<testsuite name="presupuesto de bytes por lote" time="0.436009" disabled="0" errors="0" tests="3" failures="0" skipped="0" hostname="drivesidian">
+		<testcase name="un lote vacío no pesa nada" time="0.089069" classname="test" file="server\tests\unit\workers.test.js"/>
+		<testcase name="corta al pasar de 20 MiB y deja el resto para el siguiente ciclo" time="0.110698" classname="test" file="server\tests\unit\workers.test.js"/>
+		<testcase name="la primera nota entra siempre, aunque sola exceda el presupuesto" time="0.104811" classname="test" file="server\tests\unit\workers.test.js"/>
+	</testsuite>
+	<testsuite name="worker de sincronización" time="1.802681" disabled="0" errors="0" tests="10" failures="0" skipped="0" hostname="drivesidian">
+		<testcase name="sin notas pendientes no llama a GitHub" time="0.161567" classname="test" file="server\tests\unit\workers.test.js"/>
+		<testcase name="sube el lote, marca las notas como synced y manda UN aviso" time="0.216334" classname="test" file="server\tests\unit\workers.test.js"/>
+		<testcase name="NO marca como subida una nota editada mientras se subía el lote" time="0.177840" classname="test" file="server\tests\unit\workers.test.js"/>
+		<testcase name="si GitHub falla, el lote entero se queda pendiente para el siguiente ciclo" time="0.180075" classname="test" file="server\tests\unit\workers.test.js"/>
+		<testcase name="respeta al usuario que apagó las notificaciones" time="0.183350" classname="test" file="server\tests\unit\workers.test.js"/>
+		<testcase name="un fallo de ntfy no deshace la sincronización" time="0.155718" classname="test" file="server\tests\unit\workers.test.js"/>
+		<testcase name="un solo escritor a la vez: la segunda sincronización simultánea recibe &amp;quot;ocupado&amp;quot;" time="0.214449" classname="test" file="server\tests\unit\workers.test.js"/>
+		<testcase name="el ciclo periódico hace un commit por usuario, cada uno en su carpeta" time="0.232411" classname="test" file="server\tests\unit\workers.test.js"/>
+		<testcase name="el ciclo sin pendientes no hace nada" time="0.094279" classname="test" file="server\tests\unit\workers.test.js"/>
+		<testcase name="el worker se programa con el intervalo configurado" time="0.185008" classname="test" file="server\tests\unit\workers.test.js"/>
+	</testsuite>
+	<testsuite name="worker de retención" time="0.377373" disabled="0" errors="0" tests="3" failures="0" skipped="0" hostname="drivesidian">
+		<testcase name="poda eventos de más de 90 días y códigos vencidos hace más de un día" time="0.115466" classname="test" file="server\tests\unit\workers.test.js"/>
+		<testcase name="respeta los días de retención configurados" time="0.102045" classname="test" file="server\tests\unit\workers.test.js"/>
+		<testcase name="arranca podando de inmediato y luego a diario" time="0.159315" classname="test" file="server\tests\unit\workers.test.js"/>
+	</testsuite>
+	<!-- tests 200 -->
+	<!-- suites 48 -->
+	<!-- pass 200 -->
+	<!-- fail 0 -->
+	<!-- cancelled 0 -->
+	<!-- skipped 0 -->
+	<!-- todo 0 -->
+	<!-- duration_ms 28725.6745 -->
+</testsuites>

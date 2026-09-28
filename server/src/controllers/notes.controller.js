@@ -7,6 +7,7 @@ const { resolveSchema } = require('../schemas/notes/resolve');
 const { createSchema } = require('../schemas/notes/create');
 const notesModel = require('../models/notes.model');
 const { success, error, validationError, conflict } = require('../utils/response');
+const { esIdValido } = require('../utils/id');
 const {
   logSecurityEvent,
   logSecurityEventOncePerWindow,
@@ -159,7 +160,7 @@ const resolve = async (req, res) => {
   if (req.auth.type !== 'user') {
     return error(res, 'Este endpoint es exclusivo de la sesión web.', 403);
   }
-  if (!/^\d+$/.test(req.params.id)) {
+  if (!esIdValido(req.params.id)) {
     return error(res, 'id inválido.', 400);
   }
 
@@ -195,7 +196,7 @@ const getOne = async (req, res) => {
   if (req.auth.type !== 'user') {
     return error(res, 'Este endpoint es exclusivo de la sesión web.', 403);
   }
-  if (!/^\d+$/.test(req.params.id)) {
+  if (!esIdValido(req.params.id)) {
     return error(res, 'id inválido.', 400);
   }
 
@@ -211,7 +212,7 @@ const update = async (req, res) => {
   if (req.auth.type !== 'user') {
     return error(res, 'Este endpoint es exclusivo de la sesión web.', 403);
   }
-  if (!/^\d+$/.test(req.params.id)) {
+  if (!esIdValido(req.params.id)) {
     return error(res, 'id inválido.', 400);
   }
 

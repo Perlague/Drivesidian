@@ -7,7 +7,9 @@ const log = require('./log');
 const config = require('./config');
 const { detectarVaults } = require('./vaultDetect');
 
-const INTERVALO_POLLING_MS = 2000;
+// Configurable como DRIVESIDIAN_PULL_MS, para que las pruebas no esperen dos
+// segundos por consulta. En uso real no se toca.
+const INTERVALO_POLLING_MS = Number(process.env.DRIVESIDIAN_PAIR_POLL_MS) || 2000;
 
 // Abre el navegador del usuario sin pasar por la shell. En Windows se usa
 // rundll32 y no `cmd /c start` a propósito: `start` interpreta caracteres como

@@ -1,0 +1,327 @@
+{
+	"@programName": "ZAP",
+	"@version": "2.17.0",
+	"@generated": "Mon, 28 Sept 2026 17:04:41",
+	"created": "2026-09-28T17:04:41.468859225Z",
+	"insights":[
+		{
+			"level": "Low",
+			"reason": "Warning",
+			"site": "",
+			"key": "insight.log.warn",
+			"description": "ZAP warnings logged - see the zap.log file for details",
+			"statistic": "12"
+		},
+		{
+			"level": "Info",
+			"reason": "Informational",
+			"site": "",
+			"key": "insight.network.failure",
+			"description": "Percentage of network failures",
+			"statistic": "1"
+		},
+		{
+			"level": "Info",
+			"reason": "Informational",
+			"site": "http://host.docker.internal:3998",
+			"key": "insight.code.2xx",
+			"description": "Percentage of responses with status code 2xx",
+			"statistic": "57"
+		},
+		{
+			"level": "Info",
+			"reason": "Informational",
+			"site": "http://host.docker.internal:3998",
+			"key": "insight.code.3xx",
+			"description": "Percentage of responses with status code 3xx",
+			"statistic": "8"
+		},
+		{
+			"level": "Info",
+			"reason": "Exceeded Low",
+			"site": "http://host.docker.internal:3998",
+			"key": "insight.code.4xx",
+			"description": "Percentage of responses with status code 4xx",
+			"statistic": "33"
+		},
+		{
+			"level": "Info",
+			"reason": "Informational",
+			"site": "http://host.docker.internal:3998",
+			"key": "insight.endpoint.ctype.text/css",
+			"description": "Percentage of endpoints with content type text/css",
+			"statistic": "10"
+		},
+		{
+			"level": "Info",
+			"reason": "Informational",
+			"site": "http://host.docker.internal:3998",
+			"key": "insight.endpoint.ctype.text/html",
+			"description": "Percentage of endpoints with content type text/html",
+			"statistic": "50"
+		},
+		{
+			"level": "Info",
+			"reason": "Informational",
+			"site": "http://host.docker.internal:3998",
+			"key": "insight.endpoint.ctype.text/javascript",
+			"description": "Percentage of endpoints with content type text/javascript",
+			"statistic": "30"
+		},
+		{
+			"level": "Info",
+			"reason": "Informational",
+			"site": "http://host.docker.internal:3998",
+			"key": "insight.endpoint.ctype.text/plain",
+			"description": "Percentage of endpoints with content type text/plain",
+			"statistic": "10"
+		},
+		{
+			"level": "Info",
+			"reason": "Informational",
+			"site": "http://host.docker.internal:3998",
+			"key": "insight.endpoint.method.GET",
+			"description": "Percentage of endpoints with method GET",
+			"statistic": "100"
+		},
+		{
+			"level": "Info",
+			"reason": "Informational",
+			"site": "http://host.docker.internal:3998",
+			"key": "insight.endpoint.total",
+			"description": "Count of total endpoints",
+			"statistic": "10"
+		},
+		{
+			"level": "Info",
+			"reason": "Informational",
+			"site": "http://host.docker.internal:3998",
+			"key": "insight.response.slow",
+			"description": "Percentage of slow responses",
+			"statistic": "2"
+		}
+	],
+	"site":[ 
+		{
+			"@name": "http://host.docker.internal:3998",
+			"@host": "host.docker.internal",
+			"@port": "3998",
+			"@ssl": "false",
+			"alerts": [ 
+				{
+					"pluginid": "90027",
+					"alertRef": "90027",
+					"alert": "Cookie Slack Detector",
+					"name": "Cookie Slack Detector",
+					"riskcode": "1",
+					"confidence": "1",
+					"riskdesc": "Low (Low)",
+					"desc": "<p>Repeated GET requests: drop a different cookie each time, followed by normal request with all cookies to stabilize session, compare responses against original baseline GET. This can reveal areas where cookie based authentication/attributes are not actually enforced.</p>",
+					"instances":[ 
+						{
+							"id": "61",
+							"uri": "http://host.docker.internal:3998",
+							"nodeName": "http:\/\/host.docker.internal:3998",
+							"method": "GET",
+							"param": "",
+							"attack": "",
+							"evidence": "",
+							"otherinfo": "NOTE: Because of its name this cookie may be important, but dropping it appears to have no effect: [drivesidian_session]\nCookies that don't have expected effects can reveal flaws in application logic. In the worst case, this can reveal where authentication via cookie token(s) is not actually enforced.\nThese cookies affected the response: \nThese cookies did NOT affect the response: drivesidian_session\n"
+						},
+						{
+							"id": "60",
+							"uri": "http://host.docker.internal:3998/",
+							"nodeName": "http:\/\/host.docker.internal:3998\/",
+							"method": "GET",
+							"param": "",
+							"attack": "",
+							"evidence": "",
+							"otherinfo": "NOTE: Because of its name this cookie may be important, but dropping it appears to have no effect: [drivesidian_session]\nCookies that don't have expected effects can reveal flaws in application logic. In the worst case, this can reveal where authentication via cookie token(s) is not actually enforced.\nThese cookies affected the response: \nThese cookies did NOT affect the response: drivesidian_session\n"
+						},
+						{
+							"id": "62",
+							"uri": "http://host.docker.internal:3998/css",
+							"nodeName": "http:\/\/host.docker.internal:3998\/css",
+							"method": "GET",
+							"param": "",
+							"attack": "",
+							"evidence": "",
+							"otherinfo": "NOTE: Because of its name this cookie may be important, but dropping it appears to have no effect: [drivesidian_session]\nCookies that don't have expected effects can reveal flaws in application logic. In the worst case, this can reveal where authentication via cookie token(s) is not actually enforced.\nThese cookies affected the response: \nThese cookies did NOT affect the response: drivesidian_session\n"
+						},
+						{
+							"id": "64",
+							"uri": "http://host.docker.internal:3998/css/app.css",
+							"nodeName": "http:\/\/host.docker.internal:3998\/css\/app.css",
+							"method": "GET",
+							"param": "",
+							"attack": "",
+							"evidence": "",
+							"otherinfo": "NOTE: Because of its name this cookie may be important, but dropping it appears to have no effect: [drivesidian_session]\nCookies that don't have expected effects can reveal flaws in application logic. In the worst case, this can reveal where authentication via cookie token(s) is not actually enforced.\nThese cookies affected the response: \nThese cookies did NOT affect the response: drivesidian_session\n"
+						},
+						{
+							"id": "63",
+							"uri": "http://host.docker.internal:3998/dashboard",
+							"nodeName": "http:\/\/host.docker.internal:3998\/dashboard",
+							"method": "GET",
+							"param": "",
+							"attack": "",
+							"evidence": "",
+							"otherinfo": "NOTE: Because of its name this cookie may be important, but dropping it appears to have no effect: [drivesidian_session]\nCookies that don't have expected effects can reveal flaws in application logic. In the worst case, this can reveal where authentication via cookie token(s) is not actually enforced.\nThese cookies affected the response: \nThese cookies did NOT affect the response: drivesidian_session\n"
+						}
+					],
+					"count": "5",
+					"systemic": true,
+					"solution": "",
+					"otherinfo": "<p>NOTE: Because of its name this cookie may be important, but dropping it appears to have no effect: [drivesidian_session]</p><p>Cookies that don't have expected effects can reveal flaws in application logic. In the worst case, this can reveal where authentication via cookie token(s) is not actually enforced.</p><p>These cookies affected the response: </p><p>These cookies did NOT affect the response: drivesidian_session</p><p></p>",
+					"reference": "<p>https://cwe.mitre.org/data/definitions/205.html</p>",
+					"cweid": "205",
+					"wascid": "45",
+					"sourceid": "1829"
+				},
+				{
+					"pluginid": "10049",
+					"alertRef": "10049-1",
+					"alert": "Non-Storable Content",
+					"name": "Non-Storable Content",
+					"riskcode": "0",
+					"confidence": "2",
+					"riskdesc": "Informational (Medium)",
+					"desc": "<p>The response contents are not storable by caching components such as proxy servers. If the response does not contain sensitive, personal or user-specific information, it may benefit from being stored and cached, to improve performance.</p>",
+					"instances":[ 
+						{
+							"id": "2",
+							"uri": "http://host.docker.internal:3998",
+							"nodeName": "http:\/\/host.docker.internal:3998",
+							"method": "GET",
+							"param": "",
+							"attack": "",
+							"evidence": "no-store",
+							"otherinfo": ""
+						},
+						{
+							"id": "0",
+							"uri": "http://host.docker.internal:3998/",
+							"nodeName": "http:\/\/host.docker.internal:3998\/",
+							"method": "GET",
+							"param": "",
+							"attack": "",
+							"evidence": "no-store",
+							"otherinfo": ""
+						},
+						{
+							"id": "4",
+							"uri": "http://host.docker.internal:3998/css/app.css",
+							"nodeName": "http:\/\/host.docker.internal:3998\/css\/app.css",
+							"method": "GET",
+							"param": "",
+							"attack": "",
+							"evidence": "no-store",
+							"otherinfo": ""
+						},
+						{
+							"id": "1",
+							"uri": "http://host.docker.internal:3998/notes",
+							"nodeName": "http:\/\/host.docker.internal:3998\/notes",
+							"method": "GET",
+							"param": "",
+							"attack": "",
+							"evidence": "no-store",
+							"otherinfo": ""
+						},
+						{
+							"id": "5",
+							"uri": "http://host.docker.internal:3998/sitemap.xml",
+							"nodeName": "http:\/\/host.docker.internal:3998\/sitemap.xml",
+							"method": "GET",
+							"param": "",
+							"attack": "",
+							"evidence": "no-store",
+							"otherinfo": ""
+						}
+					],
+					"count": "5",
+					"systemic": true,
+					"solution": "<p>The content may be marked as storable by ensuring that the following conditions are satisfied:</p><p>The request method must be understood by the cache and defined as being cacheable (\"GET\", \"HEAD\", and \"POST\" are currently defined as cacheable)</p><p>The response status code must be understood by the cache (one of the 1XX, 2XX, 3XX, 4XX, or 5XX response classes are generally understood)</p><p>The \"no-store\" cache directive must not appear in the request or response header fields</p><p>For caching by \"shared\" caches such as \"proxy\" caches, the \"private\" response directive must not appear in the response</p><p>For caching by \"shared\" caches such as \"proxy\" caches, the \"Authorization\" header field must not appear in the request, unless the response explicitly allows it (using one of the \"must-revalidate\", \"public\", or \"s-maxage\" Cache-Control response directives)</p><p>In addition to the conditions above, at least one of the following conditions must also be satisfied by the response:</p><p>It must contain an \"Expires\" header field</p><p>It must contain a \"max-age\" response directive</p><p>For \"shared\" caches such as \"proxy\" caches, it must contain a \"s-maxage\" response directive</p><p>It must contain a \"Cache Control Extension\" that allows it to be cached</p><p>It must have a status code that is defined as cacheable by default (200, 203, 204, 206, 300, 301, 404, 405, 410, 414, 501).</p>",
+					"otherinfo": "",
+					"reference": "<p>https://datatracker.ietf.org/doc/html/rfc7234</p><p>https://datatracker.ietf.org/doc/html/rfc7231</p><p>https://www.w3.org/Protocols/rfc2616/rfc2616-sec13.html</p>",
+					"cweid": "524",
+					"wascid": "13",
+					"sourceid": "11"
+				},
+				{
+					"pluginid": "10104",
+					"alertRef": "10104",
+					"alert": "User Agent Fuzzer",
+					"name": "User Agent Fuzzer",
+					"riskcode": "0",
+					"confidence": "2",
+					"riskdesc": "Informational (Medium)",
+					"desc": "<p>Check for differences in response based on fuzzed User Agent (eg. mobile sites, access as a Search Engine Crawler). Compares the response statuscode and the hashcode of the response body with the original response.</p>",
+					"instances":[ 
+						{
+							"id": "15",
+							"uri": "http://host.docker.internal:3998",
+							"nodeName": "http:\/\/host.docker.internal:3998",
+							"method": "GET",
+							"param": "Header User-Agent",
+							"attack": "Mozilla/4.0 (compatible; MSIE 7.0; Windows NT 6.0)",
+							"evidence": "",
+							"otherinfo": ""
+						},
+						{
+							"id": "12",
+							"uri": "http://host.docker.internal:3998",
+							"nodeName": "http:\/\/host.docker.internal:3998",
+							"method": "GET",
+							"param": "Header User-Agent",
+							"attack": "Mozilla/4.0 (compatible; MSIE 8.0; Windows NT 6.1)",
+							"evidence": "",
+							"otherinfo": ""
+						},
+						{
+							"id": "16",
+							"uri": "http://host.docker.internal:3998/",
+							"nodeName": "http:\/\/host.docker.internal:3998\/",
+							"method": "GET",
+							"param": "Header User-Agent",
+							"attack": "Mozilla/4.0 (compatible; MSIE 7.0; Windows NT 6.0)",
+							"evidence": "",
+							"otherinfo": ""
+						},
+						{
+							"id": "13",
+							"uri": "http://host.docker.internal:3998/",
+							"nodeName": "http:\/\/host.docker.internal:3998\/",
+							"method": "GET",
+							"param": "Header User-Agent",
+							"attack": "Mozilla/4.0 (compatible; MSIE 8.0; Windows NT 6.1)",
+							"evidence": "",
+							"otherinfo": ""
+						},
+						{
+							"id": "14",
+							"uri": "http://host.docker.internal:3998/css",
+							"nodeName": "http:\/\/host.docker.internal:3998\/css",
+							"method": "GET",
+							"param": "Header User-Agent",
+							"attack": "Mozilla/4.0 (compatible; MSIE 8.0; Windows NT 6.1)",
+							"evidence": "",
+							"otherinfo": ""
+						}
+					],
+					"count": "5",
+					"systemic": true,
+					"solution": "",
+					"otherinfo": "",
+					"reference": "<p>https://owasp.org/wstg</p>",
+					"cweid": "0",
+					"wascid": "0",
+					"sourceid": "1119"
+				}
+			]
+		}
+	],
+	"sequences":[
+	]
+
+}

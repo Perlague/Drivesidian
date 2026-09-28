@@ -1,0 +1,102 @@
+<?xml version="1.0" encoding="utf-8"?>
+<testsuites>
+	<testsuite name="flujo completo de un usuario" time="8.561864" disabled="0" errors="0" tests="7" failures="0" skipped="0" hostname="drivesidian">
+		<testcase name="1 · vincula el equipo: el agente pide código, la persona aprueba, el agente recibe su token" time="3.545805" classname="test" file="agent\tests\integracion\extremoAExtremo.test.js"/>
+		<testcase name="2 · una nota escrita en Obsidian llega al servidor, pendiente de subir a GitHub" time="0.079678" classname="test" file="agent\tests\integracion\extremoAExtremo.test.js"/>
+		<testcase name="3 · lo que se edita en la web baja al disco en la siguiente consulta" time="0.081543" classname="test" file="agent\tests\integracion\extremoAExtremo.test.js"/>
+		<testcase name="4 · una edición local posterior sube como versión 3, sin conflicto" time="0.050833" classname="test" file="agent\tests\integracion\extremoAExtremo.test.js"/>
+		<testcase name="5 · si cambian los dos lados, nadie pisa a nadie: conflicto que resuelve una persona" time="0.179133" classname="test" file="agent\tests\integracion\extremoAExtremo.test.js"/>
+		<testcase name="6 · el agente arranca solo, vigila la carpeta y sube una nota nueva" time="2.038190" classname="test" file="agent\tests\integracion\extremoAExtremo.test.js"/>
+		<testcase name="7 · al desinstalar, el agente revoca su propio token y borra su configuración" time="1.588506" classname="test" file="agent\tests\integracion\extremoAExtremo.test.js"/>
+	</testsuite>
+	<testsuite name="dónde guarda el agente sus datos" time="0.013612" disabled="0" errors="0" tests="3" failures="0" skipped="0" hostname="drivesidian">
+		<testcase name="respeta DRIVESIDIAN_DATA_DIR" time="0.005955" classname="test" file="agent\tests\unit\almacenamiento.test.js"/>
+		<testcase name="en Windows usa %APPDATA%\Drivesidian, no la carpeta del programa" time="0.002310" classname="test" file="agent\tests\unit\almacenamiento.test.js"/>
+		<testcase name="fuera de Windows usa ~/.config/drivesidian" time="0.001240" classname="test" file="agent\tests\unit\almacenamiento.test.js"/>
+	</testsuite>
+	<testsuite name="índice de estado local" time="0.039689" disabled="0" errors="0" tests="4" failures="0" skipped="0" hostname="drivesidian">
+		<testcase name="sin archivo previo arranca vacío y lo dice (dispara la reconciliación)" time="0.002620" classname="test" file="agent\tests\unit\almacenamiento.test.js"/>
+		<testcase name="guarda hash y versión por nota, y sobrevive a un reinicio del agente" time="0.018007" classname="test" file="agent\tests\unit\almacenamiento.test.js"/>
+		<testcase name="un índice corrupto se trata como ausente, sin tumbar al agente" time="0.007316" classname="test" file="agent\tests\unit\almacenamiento.test.js"/>
+		<testcase name="si no puede guardar, lo registra en el log en vez de fallar" time="0.010867" classname="test" file="agent\tests\unit\almacenamiento.test.js"/>
+	</testsuite>
+	<testsuite name="configuración del agente" time="1.960317" disabled="0" errors="0" tests="7" failures="0" skipped="0" hostname="drivesidian">
+		<testcase name="sin archivo apunta al servidor local de desarrollo" time="0.004361" classname="test" file="agent\tests\unit\almacenamiento.test.js"/>
+		<testcase name="DRIVESIDIAN_API_URL gana sobre el archivo y se le quita la barra final" time="0.012233" classname="test" file="agent\tests\unit\almacenamiento.test.js"/>
+		<testcase name="lee la URL que dejó el instalador aunque venga con BOM" time="0.007525" classname="test" file="agent\tests\unit\almacenamiento.test.js"/>
+		<testcase name="un config.json corrupto da un error claro" time="0.009008" classname="test" file="agent\tests\unit\almacenamiento.test.js"/>
+		<testcase name="olvidar el token conserva el resto; borrar elimina el archivo" time="0.881831" classname="test" file="agent\tests\unit\almacenamiento.test.js"/>
+		<testcase name="borra el config.json aunque la ruta tenga acentos (C:\Users\José)" time="0.010421" classname="test" file="agent\tests\unit\almacenamiento.test.js"/>
+		<testcase name="guardar el token como null lo quita del archivo" time="1.033705" classname="test" file="agent\tests\unit\almacenamiento.test.js"/>
+	</testsuite>
+	<testsuite name="token cifrado en disco" time="4.558545" disabled="0" errors="0" tests="6" failures="0" skipped="0" hostname="drivesidian">
+		<testcase name="en Windows se cifra con DPAPI: el archivo nunca tiene el token en claro" time="1.536839" classname="test" file="agent\tests\unit\almacenamiento.test.js"/>
+		<testcase name="un token que estaba en claro se migra a cifrado" time="1.612986" classname="test" file="agent\tests\unit\almacenamiento.test.js"/>
+		<testcase name="un blob de otra cuenta o de otro equipo no descifra: se trata como sin token" time="1.379344" classname="test" file="agent\tests\unit\almacenamiento.test.js"/>
+		<testcase name="sin DPAPI (fuera de Windows) queda en claro y se reporta como tal" time="0.008896" classname="test" file="agent\tests\unit\almacenamiento.test.js"/>
+		<testcase name="si PowerShell falla al cifrar, guarda en claro y lo avisa en el log" time="0.012765" classname="test" file="agent\tests\unit\almacenamiento.test.js"/>
+		<testcase name="pasa el token a PowerShell por stdin, nunca como argumento" time="0.005799" classname="test" file="agent\tests\unit\almacenamiento.test.js"/>
+	</testsuite>
+	<testsuite name="log a disco" time="0.029605" disabled="0" errors="0" tests="1" failures="0" skipped="0" hostname="drivesidian">
+		<testcase name="escribe cada línea en agent.log y rota el archivo al pasar de 5 MB" time="0.029342" classname="test" file="agent\tests\unit\almacenamiento.test.js"/>
+	</testsuite>
+	<testsuite name="cola de subida" time="0.344019" disabled="0" errors="0" tests="11" failures="0" skipped="0" hostname="drivesidian">
+		<testcase name="manda la nota con el token y apunta en el índice la versión que confirmó el servidor" time="0.104061" classname="test" file="agent\tests\unit\sincronizacion.test.js"/>
+		<testcase name="manda base_version cuando conoce la nota" time="0.027640" classname="test" file="agent\tests\unit\sincronizacion.test.js"/>
+		<testcase name="ante un conflicto (409) no decide nada y no vuelve a insistir con ese contenido" time="0.023700" classname="test" file="agent\tests\unit\sincronizacion.test.js"/>
+		<testcase name="si revocaron el token (401), se detiene, vacía la cola y avisa" time="0.015440" classname="test" file="agent\tests\unit\sincronizacion.test.js"/>
+		<testcase name="un 400 descarta la nota en vez de reintentarla para siempre" time="0.016384" classname="test" file="agent\tests\unit\sincronizacion.test.js"/>
+		<testcase name="un 403 descarta la nota en vez de reintentarla para siempre" time="0.014437" classname="test" file="agent\tests\unit\sincronizacion.test.js"/>
+		<testcase name="un 413 descarta la nota en vez de reintentarla para siempre" time="0.014839" classname="test" file="agent\tests\unit\sincronizacion.test.js"/>
+		<testcase name="sin red reintenta con espera creciente hasta que el servidor vuelve" time="0.016321" classname="test" file="agent\tests\unit\sincronizacion.test.js"/>
+		<testcase name="con 429 espera lo que diga Retry-After" time="0.015395" classname="test" file="agent\tests\unit\sincronizacion.test.js"/>
+		<testcase name="con un error del servidor (500) reintenta" time="0.035850" classname="test" file="agent\tests\unit\sincronizacion.test.js"/>
+		<testcase name="si la nota se edita mientras se envía, manda la versión nueva después" time="0.051286" classname="test" file="agent\tests\unit\sincronizacion.test.js"/>
+	</testsuite>
+	<testsuite name="consulta de cambios" time="0.008587" disabled="0" errors="0" tests="2" failures="0" skipped="0" hostname="drivesidian">
+		<testcase name="pide desde el cursor que dio el servidor" time="0.005018" classname="test" file="agent\tests\unit\sincronizacion.test.js"/>
+		<testcase name="devuelve null sin red o con error, y avisa si el token fue revocado" time="0.002936" classname="test" file="agent\tests\unit\sincronizacion.test.js"/>
+	</testsuite>
+	<testsuite name="bajada al disco" time="0.121734" disabled="0" errors="0" tests="3" failures="0" skipped="0" hostname="drivesidian">
+		<testcase name="apunta el hash en el índice ANTES de escribir, para no reportar su propia escritura" time="0.064572" classname="test" file="agent\tests\unit\sincronizacion.test.js"/>
+		<testcase name="escribe lo nuevo, no pisa lo que el usuario cambió y no reescribe lo que ya coincide" time="0.034304" classname="test" file="agent\tests\unit\sincronizacion.test.js"/>
+		<testcase name="lista solo las notas .md de la carpeta sincronizada, sin .obsidian ni .trash" time="0.020961" classname="test" file="agent\tests\unit\sincronizacion.test.js"/>
+	</testsuite>
+	<testsuite name="reconciliación de un agente sin índice" time="0.058876" disabled="0" errors="0" tests="2" failures="0" skipped="0" hostname="drivesidian">
+		<testcase name="trae lo que falta, registra lo que coincide, y sube lo distinto y lo nuevo sin pisar nada" time="0.050519" classname="test" file="agent\tests\unit\sincronizacion.test.js"/>
+		<testcase name="si el servidor no responde, conserva el cursor que tenía" time="0.007616" classname="test" file="agent\tests\unit\sincronizacion.test.js"/>
+	</testsuite>
+	<testsuite name="bucle de bajada" time="0.114954" disabled="0" errors="0" tests="2" failures="0" skipped="0" hostname="drivesidian">
+		<testcase name="consulta al arrancar y luego en cada intervalo, sin solaparse" time="0.085032" classname="test" file="agent\tests\unit\sincronizacion.test.js"/>
+		<testcase name="un error al aplicar se registra y no tumba el bucle" time="0.029267" classname="test" file="agent\tests\unit\sincronizacion.test.js"/>
+	</testsuite>
+	<testsuite name="detección del vault de Obsidian" time="0.075055" disabled="0" errors="0" tests="4" failures="0" skipped="0" hostname="drivesidian">
+		<testcase name="busca el registro de Obsidian en la carpeta de cada sistema" time="0.017265" classname="test" file="agent\tests\unit\vinculacionYDisco.test.js"/>
+		<testcase name="descarta vaults que ya no existen y ordena por el último abierto" time="0.025758" classname="test" file="agent\tests\unit\vinculacionYDisco.test.js"/>
+		<testcase name="sin Obsidian instalado o con un registro dañado no hay vaults" time="0.019128" classname="test" file="agent\tests\unit\vinculacionYDisco.test.js"/>
+		<testcase name="crea la carpeta Drivesidian dentro del vault" time="0.008485" classname="test" file="agent\tests\unit\vinculacionYDisco.test.js"/>
+	</testsuite>
+	<testsuite name="vinculación del equipo" time="5.820185" disabled="0" errors="0" tests="9" failures="0" skipped="0" hostname="drivesidian">
+		<testcase name="pide un código con el HASH del secreto, abre el navegador y canjea con el secreto" time="3.363058" classname="test" file="agent\tests\unit\vinculacionYDisco.test.js"/>
+		<testcase name="si el servidor no manda vault y solo hay uno detectado, usa ese" time="1.287210" classname="test" file="agent\tests\unit\vinculacionYDisco.test.js"/>
+		<testcase name="aprobado sin vault que usar es un error claro" time="0.021082" classname="test" file="agent\tests\unit\vinculacionYDisco.test.js"/>
+		<testcase name="un código caducado (410) o un error del servidor detienen la vinculación" time="0.044053" classname="test" file="agent\tests\unit\vinculacionYDisco.test.js"/>
+		<testcase name="tolera cortes de red y el límite de peticiones mientras espera" time="1.007742" classname="test" file="agent\tests\unit\vinculacionYDisco.test.js"/>
+		<testcase name="si el servidor rechaza la solicitud, lo dice" time="0.008835" classname="test" file="agent\tests\unit\vinculacionYDisco.test.js"/>
+		<testcase name="si nadie aprueba antes de que caduque el código, se rinde" time="0.074212" classname="test" file="agent\tests\unit\vinculacionYDisco.test.js"/>
+		<testcase name="abre el navegador con el comando de cada sistema, sin pasar por la shell" time="0.007882" classname="test" file="agent\tests\unit\vinculacionYDisco.test.js"/>
+		<testcase name="si ni siquiera puede lanzar el proceso, devuelve false" time="0.004097" classname="test" file="agent\tests\unit\vinculacionYDisco.test.js"/>
+	</testsuite>
+	<testsuite name="vigilante de la carpeta" time="0.678745" disabled="0" errors="0" tests="2" failures="0" skipped="0" hostname="drivesidian">
+		<testcase name="normaliza la ruta relativa con barras normales" time="0.001576" classname="test" file="agent\tests\unit\vinculacionYDisco.test.js"/>
+		<testcase name="reporta los .md nuevos y editados, e ignora su propia escritura y otros archivos" time="0.676000" classname="test" file="agent\tests\unit\vinculacionYDisco.test.js"/>
+	</testsuite>
+	<!-- tests 63 -->
+	<!-- suites 14 -->
+	<!-- pass 63 -->
+	<!-- fail 0 -->
+	<!-- cancelled 0 -->
+	<!-- skipped 0 -->
+	<!-- todo 0 -->
+	<!-- duration_ms 26399.8796 -->
+</testsuites>

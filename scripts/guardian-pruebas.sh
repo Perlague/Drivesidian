@@ -79,6 +79,12 @@ if [ -n "$CORREO" ]; then
   stty echo 2>/dev/null || true
   echo
 
+  # El login admite 10 intentos por minuto por IP, y A y B ya gastaron 7. Sin
+  # esta espera, los últimos intentos de C reciben 429 del limitador antes de
+  # llegar a contar como fallos de TOTP, y el bloqueo nunca se produce.
+  paso "Esperando 65 s a que se renueve el límite de intentos del login…"
+  sleep 65
+
   i=1
   while [ "$i" -le 6 ]; do
     CODIGO=$(post_login 'curl/pruebas-guardian' \

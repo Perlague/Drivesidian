@@ -150,3 +150,6 @@ installer/dist/
 installer/staging/
 installer/redist/
 installer/icono.ico
+
+# Documentación generada
+docs/entregables

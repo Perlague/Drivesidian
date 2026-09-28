@@ -1,0 +1,383 @@
+▶ bloqueo por fuerza bruta al segundo factor
+  ✔ cuenta cada código incorrecto y bloquea al quinto con un evento crítico (642.047ms)
+  ✔ mientras dura el bloqueo, ni el código correcto entra (78.3093ms)
+  ✔ el bloqueo dura 15 minutos (2.8233ms)
+  ✔ pasado el bloqueo, el código correcto entra y el contador vuelve a cero (86.0022ms)
+✔ bloqueo por fuerza bruta al segundo factor (1068.8148ms)
+▶ inyección SQL
+  ✔ una ruta de nota maliciosa se guarda como texto y las tablas siguen ahí (274.3089ms)
+  ✔ en el login no abre ninguna cuenta (12.8551ms)
+  ✔ en un id de la URL se rechaza antes de llegar a la base (9.7068ms)
+  ✔ en los filtros del panel de administración no devuelve de más (19.5997ms)
+  ✔ en el nombre de una nota creada desde la web (24.17ms)
+✔ inyección SQL (629.123ms)
+▶ ids fuera de rango
+  ✔ en las rutas del panel responde 400, nunca 500 (21.3553ms)
+  ✔ en el cursor de la bajada responde 400 (19.1116ms)
+✔ ids fuera de rango (41.0342ms)
+▶ path traversal
+  ✔ una nota con ../ no escribe fuera de la carpeta del usuario en GitHub (39.9196ms)
+✔ path traversal (40.5136ms)
+▶ límites de uso
+  ✔ login: 10 intentos por minuto por IP, y una sola línea en el feed con el conteo (553.5411ms)
+  ✔ "sincronizar ahora": 5 por minuto por usuario (151.6296ms)
+  ✔ token de agente: 300 peticiones por hora por token, no por IP (2332.0817ms)
+  ✔ pedir códigos de vinculación: 20 por hora por IP (192.3582ms)
+✔ límites de uso (3398.6065ms)
+▶ subida desde el disco
+  ✔ una ruta nueva se crea en versión 1 (141.4381ms)
+  ✔ el mismo contenido no hace nada: evita resubir el vault en cada arranque (15.0639ms)
+  ✔ partiendo de la versión actual, sobrescribe y sube la versión (13.5444ms)
+  ✔ partiendo de una versión vieja, es conflicto: guarda lo del disco aparte y no pisa (17.8249ms)
+  ✔ sin base_version sobre una nota existente también es conflicto (agente sin índice) (26.5352ms)
+  ✔ si el disco vuelve a coincidir con el servidor, el conflicto se limpia solo (12.5046ms)
+  ✔ valida el cuerpo (19.4159ms)
+  ✔ una sesión web no puede usar los endpoints del agente (9.6936ms)
+✔ subida desde el disco (491.6081ms)
+▶ bajada al disco
+  ✔ devuelve las notas cambiadas con un cursor del servidor, sin las que están en conflicto (14.9307ms)
+  ✔ con el cursor ya no repite lo que entregó (14.8732ms)
+  ✔ valida el cursor (9.5181ms)
+  ✔ pedir 100 notas o más de golpe se reporta UNA vez por hora como lectura masiva (383.0347ms)
+✔ bajada al disco (423.0386ms)
+▶ cuota desde el agente
+  ✔ una ruta nueva con la cuota llena se rechaza, pero editar una existente sigue funcionando (235.8483ms)
+✔ cuota desde el agente (236.1657ms)
+▶ tokens de agente en la autenticación
+  ✔ un token de solo lectura puede bajar pero no subir (15.1105ms)
+  ✔ un token sin alcances se rechaza y pide volver a vincular (3.8787ms)
+  ✔ un token revocado se rechaza y dispara un evento CRÍTICO (43.4597ms)
+  ✔ un token válido de otro usuario (userId alterado) no pasa: la firma lo delata (3.9125ms)
+  ✔ registra el último uso del token para verlo en el panel (2.7562ms)
+✔ tokens de agente en la autenticación (69.8183ms)
+▶ crear notas desde el panel
+  ✔ la crea dentro de la carpeta sincronizada, en versión 1 y pendiente de subir (185.6128ms)
+  ✔ no pisa una nota que ya existe con ese nombre (20.988ms)
+  ✔ rechaza nombres inválidos y contenido de más de 1 MiB (medido en bytes) (53.5404ms)
+✔ crear notas desde el panel (581.8153ms)
+▶ leer y listar
+  ✔ la lista no arrastra el contenido de las notas (17.6104ms)
+  ✔ una nota ajena responde 404, no 403: no se confirma que exista (25.0179ms)
+  ✔ un id que no es número responde 400 (3.9766ms)
+  ✔ un token de agente no puede usar los endpoints del panel (54.4131ms)
+✔ leer y listar (101.7625ms)
+▶ edición con control de versión
+  ✔ guarda si se parte de la versión actual y la sube en uno (23.1546ms)
+  ✔ si otro la cambió antes, responde 409 con las dos versiones y no pisa nada (27.9944ms)
+  ✔ valida el cuerpo y la propiedad de la nota (17.9112ms)
+✔ edición con control de versión (69.5586ms)
+▶ conflictos entre la web y el disco
+  ✔ se niega a editar una nota en conflicto hasta resolverlo (15.0369ms)
+  ✔ la lista marca las notas que necesitan atención (16.5738ms)
+  ✔ conservar la del servidor descarta la del disco sin cambiar la versión (21.2748ms)
+  ✔ conservar la del disco la vuelve la versión del servidor y la reencola (15.9248ms)
+  ✔ valida la elección y la propiedad (22.3675ms)
+✔ conflictos entre la web y el disco (91.8202ms)
+▶ sincronizar ahora
+  ✔ sube las pendientes del usuario sin esperar al ciclo (30.4121ms)
+  ✔ si ya hay una subida en curso responde 409 (77.246ms)
+✔ sincronizar ahora (108.2131ms)
+▶ cuota de notas
+  ✔ al llegar a 2000 notas no deja crear más y lo reporta (276.5751ms)
+✔ cuota de notas (276.8433ms)
+▶ páginas del panel
+  ✔ la raíz manda al login sin sesión y a las notas con ella (90.8177ms)
+  ✔ login y registro se muestran sin sesión y redirigen con ella (42.7855ms)
+  ✔ las páginas privadas mandan al login recordando el destino (3.3807ms)
+  ✔ con sesión, todas las páginas privadas cargan (55.9049ms)
+  ✔ ninguna página lleva scripts ni estilos en línea (la CSP no los permitiría) (74.3885ms)
+  ✔ la administración solo abre para el rol admin (14.7764ms)
+  ✔ cada respuesta lleva la política de seguridad de contenido (10.1522ms)
+  ✔ sirve los archivos estáticos y las librerías locales (12.4502ms)
+✔ páginas del panel (649.0696ms)
+▶ errores
+  ✔ health responde (4.942ms)
+  ✔ una ruta de API desconocida responde JSON y una página desconocida, HTML (10.3085ms)
+  ✔ un cuerpo de más de 1200 kb se rechaza con 413 en JSON, sin la página de Express (21.9797ms)
+  ✔ un JSON mal formado responde 400 (30.8111ms)
+  ✔ si la base de datos falla, responde 500 genérico sin filtrar detalles internos (10.131ms)
+✔ errores (79.0883ms)
+▶ tokens de agente desde el panel
+  ✔ el token se muestra UNA vez; después solo se listan sus datos (154.9186ms)
+  ✔ revocarlo lo deja inservible al instante (42.1838ms)
+  ✔ nadie revoca tokens ajenos (17.7651ms)
+  ✔ un agente no crea, lista ni revoca tokens: solo puede autorrevocarse (25.1336ms)
+  ✔ el desinstalador revoca su propio token y ya no puede usarlo (22.3547ms)
+✔ tokens de agente desde el panel (545.0394ms)
+▶ administración
+  ✔ un usuario normal recibe 403 y queda registrado como authz.denied (10.1142ms)
+  ✔ el administrador lista usuarios sin ver hashes ni secretos (5.9575ms)
+  ✔ consulta eventos filtrando por tipo y severidad (20.5897ms)
+  ✔ valida los filtros (8.4152ms)
+  ✔ publica el catálogo cerrado de 20 tipos de evento (6.7668ms)
+✔ administración (52.6957ms)
+▶ registro
+  ✔ crea la cuenta y no devuelve el hash de la contraseña (190.2037ms)
+  ✔ rechaza un correo repetido con 409 (10.7495ms)
+  ✔ valida el cuerpo con mensajes por campo (8.8705ms)
+  ✔ guarda la contraseña con scrypt, nunca en claro (3.5128ms)
+✔ registro (358.3827ms)
+▶ inicio de sesión
+  ✔ un correo inexistente responde igual que una contraseña mala (no enumera cuentas) (15.0079ms)
+  ✔ una contraseña mala responde 401 con el mismo mensaje (96.1733ms)
+  ✔ con las credenciales correctas deja una cookie httpOnly y SameSite=Lax (92.9255ms)
+  ✔ valida el cuerpo del login (3.7511ms)
+✔ inicio de sesión (208.9784ms)
+▶ cuenta y preferencias
+  ✔ /me devuelve el perfil, el topic de ntfy y su QR, sin secretos (152.9252ms)
+  ✔ /me sin sesión responde 401 (5.2892ms)
+  ✔ /me de una cuenta que ya no existe responde 404 (9.2588ms)
+  ✔ activa y desactiva las notificaciones (83.2294ms)
+  ✔ cerrar sesión borra la cookie (98.4707ms)
+✔ cuenta y preferencias (349.9812ms)
+▶ enrolamiento del segundo factor
+  ✔ entrega secreto, URI y QR, pero no guarda nada hasta confirmar (156.2453ms)
+  ✔ un código incorrecto no activa el 2FA (159.3101ms)
+  ✔ el código correcto activa el 2FA y guarda el secreto cifrado (217.92ms)
+  ✔ con 2FA activo el login pide el código y lo acepta (193.8769ms)
+  ✔ el feed de seguridad nunca incluye la contraseña (0.4003ms)
+✔ enrolamiento del segundo factor (728.1739ms)
+▶ el agente pide un código
+  ✔ recibe un código legible XXXX-XXXX, sin caracteres ambiguos, y la URL para abrir (139.3302ms)
+  ✔ valida lo que manda el agente (7.5449ms)
+  ✔ mientras nadie aprueba, la consulta dice "pendiente" (23.2813ms)
+  ✔ pide código y verifier, y rechaza un código inexistente (9.2499ms)
+✔ el agente pide un código (531.7901ms)
+▶ quien vio el código en pantalla no puede llevarse el token
+  ✔ sin el secreto del agente, el canje se rechaza con un evento CRÍTICO (17.7724ms)
+✔ quien vio el código en pantalla no puede llevarse el token (18.0898ms)
+▶ la persona aprueba desde el navegador
+  ✔ sin segundo factor no puede vincular: 403 con código para que la web redirija (19.7693ms)
+  ✔ ve qué equipo pide vincularse, sin el hash del verifier (22.6818ms)
+  ✔ flujo completo: aprobar, canjear una sola vez, y el token funciona (64.1995ms)
+  ✔ no se aprueba dos veces el mismo código (27.5123ms)
+  ✔ con varios vaults hay que elegir uno de los que detectó el agente (29.4265ms)
+  ✔ valida el cuerpo y rechaza códigos inexistentes (11.9709ms)
+  ✔ un token de agente no puede aprobar vinculaciones (9.561ms)
+  ✔ una sesión de una cuenta borrada no aprueba nada (5.0218ms)
+✔ la persona aprueba desde el navegador (191.0874ms)
+▶ los códigos caducan a los 10 minutos
+  ✔ un código vencido no se canjea ni se aprueba (61.7274ms)
+✔ los códigos caducan a los 10 minutos (61.928ms)
+▶ contraseñas con scrypt
+  ✔ verifica la contraseña correcta y rechaza otra (159.6192ms)
+  ✔ usa una sal distinta cada vez: dos hashes de la misma clave no coinciden (102.5445ms)
+✔ contraseñas con scrypt (264.7171ms)
+▶ cifrado del secreto 2FA con AES-256-GCM
+  ✔ descifra lo que cifró (1.3668ms)
+  ✔ usa un IV aleatorio: el mismo secreto cifra distinto cada vez (0.3264ms)
+  ✔ detecta una alteración del texto cifrado gracias a la etiqueta de autenticación (0.5882ms)
+  ✔ no descifra con otra llave (0.7445ms)
+✔ cifrado del secreto 2FA con AES-256-GCM (3.3743ms)
+▶ topic de ntfy derivado por HMAC
+  ✔ es estable para el mismo usuario y distinto entre usuarios (0.9812ms)
+  ✔ no se puede derivar sin el secreto del servidor (0.7631ms)
+✔ topic de ntfy derivado por HMAC (1.958ms)
+▶ cliente de la Git Data API
+  ✔ un lote vacío no llama a GitHub (2.1561ms)
+  ✔ sube un lote en UN solo commit con cinco llamadas, lleve las notas que lleve (42.4393ms)
+  ✔ se autentica con el token del servidor y manda User-Agent (2.1974ms)
+  ✔ en un repositorio sin commits siembra el primero con la Contents API y sigue (2.8167ms)
+  ✔ si otro commit movió la rama (422), relee la punta y reintenta (4.3313ms)
+  ✔ se rinde tras tres intentos fallidos en el ref (3.4244ms)
+  ✔ un error distinto de 422 al mover el ref no se reintenta (1.2133ms)
+  ✔ propaga el error si falla crear el árbol (0.8268ms)
+  ✔ propaga el error si falla leer la rama con algo que no es 404 ni 409 (0.4646ms)
+  ✔ una rama inexistente (404) cuenta como "sin punta" (0.3324ms)
+  ✔ usa main si no se configuró rama (1.0415ms)
+  ✔ codifica cada segmento de una rama anidada sin romper las barras (0.1417ms)
+✔ cliente de la Git Data API (63.8274ms)
+▶ cliente de ntfy
+  ✔ publica en el topic del usuario (0.5114ms)
+  ✔ falla si ntfy responde con error (0.3893ms)
+✔ cliente de ntfy (1.0576ms)
+▶ validación de ids
+  ✔ acepta enteros positivos que caben en un bigint (1.5995ms)
+  ✔ rechaza lo que no es un entero positivo o no cabe en un bigint (1.2204ms)
+  ✔ el cursor admite además el 0 del principio (0.277ms)
+✔ validación de ids (5.0023ms)
+▶ JWT propio (HS256)
+  ✔ firma y verifica un token válido (2.5278ms)
+  ✔ sin tiempo de vida no pone exp: así son los tokens de agente (0.2747ms)
+  ✔ rechaza un token firmado con otro secreto (0.6192ms)
+  ✔ rechaza un token con el payload alterado (0.5668ms)
+  ✔ rechaza alg "none" sin firma: la cabecera alg nunca se lee (0.4425ms)
+  ✔ rechaza un token de alg "none" aunque traiga una firma inventada (0.2724ms)
+  ✔ ignora la cabecera: un token con alg distinto pero firma HS256 correcta sigue siendo HS256 (0.2727ms)
+  ✔ rechaza un token expirado (2.2908ms)
+  ✔ rechaza entradas mal formadas (0.2308ms)
+  ✔ rechaza un payload que no es JSON aunque la firma sea correcta (0.4003ms)
+✔ JWT propio (HS256) (10.179ms)
+▶ encabezados de seguridad
+  ✔ pone una CSP estricta sin unsafe-inline ni orígenes externos (3.0439ms)
+  ✔ manda HSTS solo sobre HTTPS, nunca por HTTP plano (0.3537ms)
+✔ encabezados de seguridad (5.243ms)
+▶ alcances del token de agente
+  ✔ deja pasar a la sesión web: los alcances son solo del agente (0.6995ms)
+  ✔ deja pasar a un token con el alcance pedido (0.4256ms)
+  ✔ corta con 403 a un token sin ese alcance (0.5171ms)
+✔ alcances del token de agente (2.2181ms)
+▶ control por rol
+  ✔ deja pasar al rol correcto (1.7987ms)
+  ✔ responde 403 y emite authz.denied UNA vez por ventana, no una por intento (14.4526ms)
+  ✔ en páginas redirige a /notes en vez de mostrar un error (1.2565ms)
+✔ control por rol (17.9148ms)
+▶ guardia de páginas
+  ✔ solo acepta rutas internas como destino después del login (evita open redirect) (0.4677ms)
+  ✔ sin sesión manda al login recordando a dónde iba (0.7328ms)
+  ✔ un token de agente no abre páginas del panel (2.0088ms)
+  ✔ con sesión web deja pasar y expone al usuario a la vista (1.7461ms)
+✔ guardia de páginas (5.3594ms)
+▶ limitador de peticiones
+  ✔ deja pasar hasta el tope, luego 429 con Retry-After, y un solo evento con el conteo (1.5331ms)
+  ✔ cada clave tiene su propio contador (0.7293ms)
+  ✔ ignora las peticiones sin clave (0.3295ms)
+  ✔ la ventana se renueva al pasar el tiempo (1.9935ms)
+✔ limitador de peticiones (5.3191ms)
+▶ sesión y respuestas
+  ✔ lee cookies y tokens por cabecera o por cookie (0.3677ms)
+  ✔ da el mismo formato a éxitos, errores, validaciones y conflictos (6.5454ms)
+✔ sesión y respuestas (7.1258ms)
+▶ resolución de la URL pública
+  ✔ PUBLIC_URL gana sobre todo lo demás y se le quita la barra final (3.9925ms)
+  ✔ sin PUBLIC_URL pregunta al túnel de ngrok y prefiere el https (39.0502ms)
+  ✔ sin túnel usa el dominio (0.6818ms)
+  ✔ ignora respuestas raras de ngrok (1.344ms)
+  ✔ sin nada configurado cae a localhost; DOMAIN=localhost no cuenta como dominio (0.5915ms)
+  ✔ al arrancar con PUBLIC_URL no espera a nadie (0.865ms)
+  ✔ sin ngrok configurado resuelve una sola vez (0.7589ms)
+  ✔ con ngrok refresca la URL cada minuto y detecta que cambió (9.9727ms)
+✔ resolución de la URL pública (59.697ms)
+▶ carpeta de cada usuario en el repositorio compartido
+  ✔ arma el slug desde la parte local del correo, sin acentos (1.5566ms)
+  ✔ recorta el slug a 30 caracteres sin dejar un guion colgando (0.2834ms)
+  ✔ usa solo el id si el correo no deja un slug útil (0.2047ms)
+✔ carpeta de cada usuario en el repositorio compartido (4.1562ms)
+▶ saneamiento de rutas del vault (path traversal)
+  ✔ descarta segmentos .. y . y normaliza barras de Windows (0.3005ms)
+  ✔ una ruta maliciosa no puede salir de la carpeta del usuario (0.195ms)
+✔ saneamiento de rutas del vault (path traversal) (0.6756ms)
+▶ nombre de una nota creada desde la web
+  ✔ la mete en la carpeta sincronizada y le pone extensión .md (0.3048ms)
+  ✔ rechaza nombres vacíos o que solo son la extensión (0.2632ms)
+✔ nombre de una nota creada desde la web (0.7397ms)
+▶ TOTP propio (RFC 6238)
+  ✔ coincide con el vector oficial del RFC en t=59 (10.0053ms)
+  ✔ coincide con el vector oficial del RFC en t=1111111109 (1.2681ms)
+  ✔ coincide con el vector oficial del RFC en t=1234567890 (2.0214ms)
+  ✔ coincide con el vector oficial del RFC en t=2000000000 (0.5667ms)
+  ✔ acepta el código actual y los de ±30 segundos por desfase de reloj (2.5303ms)
+  ✔ rechaza un código de hace más de un paso (2.9415ms)
+  ✔ rechaza formatos inválidos sin intentar calcular (0.4753ms)
+  ✔ genera secretos de 160 bits en base32 y distintos cada vez (0.8508ms)
+  ✔ arma la URI otpauth que leen las apps de autenticación (1.0433ms)
+✔ TOTP propio (RFC 6238) (28.3208ms)
+▶ presupuesto de bytes por lote
+  ✔ un lote vacío no pesa nada (89.0692ms)
+  ✔ corta al pasar de 20 MiB y deja el resto para el siguiente ciclo (110.6981ms)
+  ✔ la primera nota entra siempre, aunque sola exceda el presupuesto (104.8109ms)
+✔ presupuesto de bytes por lote (436.0093ms)
+▶ worker de sincronización
+  ✔ sin notas pendientes no llama a GitHub (161.5667ms)
+  ✔ sube el lote, marca las notas como synced y manda UN aviso (216.3345ms)
+  ✔ NO marca como subida una nota editada mientras se subía el lote (177.8404ms)
+  ✔ si GitHub falla, el lote entero se queda pendiente para el siguiente ciclo (180.0755ms)
+  ✔ respeta al usuario que apagó las notificaciones (183.3505ms)
+  ✔ un fallo de ntfy no deshace la sincronización (155.718ms)
+  ✔ un solo escritor a la vez: la segunda sincronización simultánea recibe "ocupado" (214.4493ms)
+  ✔ el ciclo periódico hace un commit por usuario, cada uno en su carpeta (232.4105ms)
+  ✔ el ciclo sin pendientes no hace nada (94.2794ms)
+  ✔ el worker se programa con el intervalo configurado (185.008ms)
+✔ worker de sincronización (1802.6808ms)
+▶ worker de retención
+  ✔ poda eventos de más de 90 días y códigos vencidos hace más de un día (115.4658ms)
+  ✔ respeta los días de retención configurados (102.045ms)
+  ✔ arranca podando de inmediato y luego a diario (159.3152ms)
+✔ worker de retención (377.3726ms)
+ℹ tests 200
+ℹ suites 48
+ℹ pass 200
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 28725.6745
+ℹ start of coverage report
+ℹ -----------------------------------------------------------------------------------------
+ℹ file                         | line % | branch % | funcs % | uncovered lines
+ℹ -----------------------------------------------------------------------------------------
+ℹ src                          |        |          |         | 
+ℹ  app.js                      |  96.70 |    76.92 |  100.00 | 20-22
+ℹ  config.js                   | 100.00 |   100.00 |  100.00 | 
+ℹ  controllers                 |        |          |         | 
+ℹ   admin.controller.js        | 100.00 |   100.00 |  100.00 | 
+ℹ   agentTokens.controller.js  |  98.20 |    94.74 |  100.00 | 98-99
+ℹ   notes.controller.js        |  99.25 |    98.70 |  100.00 | 246-247
+ℹ   pairing.controller.js      |  96.43 |    90.32 |  100.00 | 60-61 64-65 127-129 215-216
+ℹ   users.controller.js        |  96.51 |    97.30 |  100.00 | 44-51
+ℹ  db                          |        |          |         | 
+ℹ   pool.js                    | 100.00 |   100.00 |  100.00 | 
+ℹ  middleware                  |        |          |         | 
+ℹ   rateLimit.js               |  94.59 |   100.00 |   80.00 | 29-32
+ℹ   rateLimit2fa.js            | 100.00 |   100.00 |  100.00 | 
+ℹ   requireAuth.js             | 100.00 |   100.00 |   66.67 | 
+ℹ   requireAuthPage.js         | 100.00 |    92.31 |  100.00 | 
+ℹ   requireRole.js             | 100.00 |   100.00 |  100.00 | 
+ℹ   requireRolePage.js         | 100.00 |   100.00 |  100.00 | 
+ℹ   requireScope.js            | 100.00 |   100.00 |  100.00 | 
+ℹ   securityHeaders.js         | 100.00 |   100.00 |  100.00 | 
+ℹ  models                      |        |          |         | 
+ℹ   agentTokens.model.js       | 100.00 |   100.00 |  100.00 | 
+ℹ   notes.model.js             |  99.34 |    88.10 |  100.00 | 50-51
+ℹ   pairingCodes.model.js      | 100.00 |    77.78 |  100.00 | 
+ℹ   securityEvents.model.js    | 100.00 |    90.00 |  100.00 | 
+ℹ   users.model.js             | 100.00 |    92.31 |  100.00 | 
+ℹ  routes                      |        |          |         | 
+ℹ   admin.routes.js            | 100.00 |   100.00 |  100.00 | 
+ℹ   agentTokens.routes.js      | 100.00 |   100.00 |  100.00 | 
+ℹ   notes.routes.js            | 100.00 |   100.00 |  100.00 | 
+ℹ   pages.routes.js            | 100.00 |   100.00 |  100.00 | 
+ℹ   pairing.routes.js          | 100.00 |   100.00 |  100.00 | 
+ℹ   users.routes.js            | 100.00 |   100.00 |  100.00 | 
+ℹ  schemas                     |        |          |         | 
+ℹ   admin                      |        |          |         | 
+ℹ    securityEventsQuery.js    | 100.00 |   100.00 |   20.00 | 
+ℹ   notes                      |        |          |         | 
+ℹ    changes.js                | 100.00 |   100.00 |   33.33 | 
+ℹ    create.js                 | 100.00 |    75.00 |   66.67 | 
+ℹ    resolve.js                | 100.00 |    66.67 |  100.00 | 
+ℹ    sync.js                   | 100.00 |    66.67 |   75.00 | 
+ℹ    update.js                 | 100.00 |    66.67 |   50.00 | 
+ℹ   pairing                    |        |          |         | 
+ℹ    approve.js                | 100.00 |    66.67 |  100.00 | 
+ℹ    start.js                  | 100.00 |   100.00 |    0.00 | 
+ℹ   users                      |        |          |         | 
+ℹ    confirm2fa.js             | 100.00 |   100.00 |    0.00 | 
+ℹ    login.js                  | 100.00 |    66.67 |   33.33 | 
+ℹ    notifications.js          | 100.00 |    66.67 |  100.00 | 
+ℹ    register.js               | 100.00 |   100.00 |    0.00 | 
+ℹ  utils                       |        |          |         | 
+ℹ   authzDenied.js             | 100.00 |    57.14 |  100.00 | 
+ℹ   github.js                  | 100.00 |    92.31 |  100.00 | 
+ℹ   id.js                      | 100.00 |   100.00 |  100.00 | 
+ℹ   jwt.js                     | 100.00 |   100.00 |  100.00 | 
+ℹ   notePath.js                | 100.00 |    90.91 |  100.00 | 
+ℹ   ntfy.js                    | 100.00 |   100.00 |  100.00 | 
+ℹ   ntfyTopic.js               | 100.00 |   100.00 |  100.00 | 
+ℹ   password.js                | 100.00 |    77.78 |  100.00 | 
+ℹ   publicUrl.js               |  97.89 |    93.33 |   92.31 | 122-124
+ℹ   repoPath.js                | 100.00 |   100.00 |  100.00 | 
+ℹ   response.js                | 100.00 |    77.78 |  100.00 | 
+ℹ   secretCrypto.js            | 100.00 |   100.00 |  100.00 | 
+ℹ   securityLog.js             |  95.00 |    75.00 |   80.00 | 96-97 118-122
+ℹ   session.js                 | 100.00 |   100.00 |  100.00 | 
+ℹ   totp.js                    |  97.80 |    88.89 |  100.00 | 25-26
+ℹ  workers                     |        |          |         | 
+ℹ   retentionWorker.js         | 100.00 |   100.00 |   75.00 | 
+ℹ   syncWorker.js              |  96.79 |    92.31 |   92.31 | 68-72
+ℹ -----------------------------------------------------------------------------------------
+ℹ all files                    |  98.71 |    92.47 |   89.91 | 
+ℹ -----------------------------------------------------------------------------------------
+ℹ end of coverage report
+(node:35604) MaxListenersExceededWarning: Possible EventEmitter memory leak detected. 11 end listeners added to [TestsStream]. MaxListeners is 10. Use emitter.setMaxListeners() to increase limit
+(Use `node --trace-warnings ...` to show where the warning was created)

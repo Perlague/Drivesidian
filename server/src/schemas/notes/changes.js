@@ -1,6 +1,7 @@
 'use strict';
 
 const { z } = require('zod');
+const { esCursorValido } = require('../../utils/id');
 
 // Query de GET /api/notes/changes. El cursor son dos campos y no uno porque la
 // paginación va por (updated_at, id): dos notas escritas en la misma
@@ -23,7 +24,7 @@ const changesQuerySchema = z.object({
     .optional(),
   since_id: z
     .string({ error: () => 'since_id debe ser texto.' })
-    .regex(/^\d+$/, 'since_id debe ser un entero.')
+    .refine(esCursorValido, 'since_id debe ser un entero.')
     .optional()
     .default('0'),
 });
