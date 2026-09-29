@@ -114,6 +114,31 @@ Desde *Agregar o quitar programas*, como cualquier otro. El desinstalador revoca
 el acceso de ese equipo automáticamente. Node.js **no** se desinstala, por si lo
 usas para otra cosa.
 
+**Vincular a mano (sin que se abra el navegador).**
+1. En el panel web, *Configuración → Equipos vinculados → Generar acceso manual*.
+   Copia el acceso: solo se muestra una vez.
+2. En la PC, desde la carpeta del agente (`C:\Program Files\Drivesidian`):
+   `node src\manualToken.js` (en el repo: `pnpm run token`). Pega el acceso cuando
+   lo pida; el agente lo comprueba contra el servidor y lo guarda cifrado.
+3. Reinicia el agente o cierra sesión y vuelve a entrar.
+
+**Empezar de cero (que no quede nada de una instalación previa).**
+Desinstalar revoca el acceso y borra `config.json` y `state.json` en
+`%APPDATA%\Drivesidian`. Si el desinstalador no pudo (sin red, sin permisos),
+o quieres comprobarlo, en la PC:
+
+```powershell
+cd "C:\Program Files\Drivesidian"
+node src\unpair.js --todo        # revoca, borra config, índice y logs
+dir $env:APPDATA\Drivesidian     # debe estar vacía o no existir
+```
+
+Ojo: **las notas que sigan en la carpeta `Drivesidian` de tu vault se vuelven a
+subir** al vincular de nuevo. Bórralas del vault si no las quieres. En el
+servidor, `./scripts/db.sh estado` cuenta lo que hay guardado, `./scripts/db.sh
+notas` borra solo las notas y `./scripts/db.sh reset` recrea toda la base
+(`docker compose down` **no** la borra: vive en el volumen `postgres-data`).
+
 **Perdí el acceso de una computadora / me la robaron.**
 Entra al panel, sección *Equipos vinculados*, y revoca su acceso. Deja de
 sincronizar de inmediato.

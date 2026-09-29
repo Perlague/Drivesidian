@@ -100,8 +100,24 @@ const reiniciar = () => {
   existiaAlArrancar = false;
 };
 
+// Borra el índice del disco. Lo usan el desinstalador y `reset`: si el índice
+// sobrevive a una desinstalación, el siguiente agente cree que ya sincronizó
+// notas que el servidor nunca vio (o que ya borraste) y no reconcilia.
+const borrarArchivo = () => {
+  entradas = null;
+  existiaAlArrancar = false;
+  for (const ruta of [archivoIndice(), `${archivoIndice()}.tmp`]) {
+    try {
+      fs.unlinkSync(ruta);
+    } catch (err) {
+      if (err.code !== 'ENOENT') throw err;
+    }
+  }
+};
+
 module.exports = {
   hashDe,
+  borrarArchivo,
   obtener,
   registrar,
   registrarVarios,

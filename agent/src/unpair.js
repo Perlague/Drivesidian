@@ -8,8 +8,10 @@
 // responde, la desinstalación debe continuar igualmente. El usuario siempre
 // puede revocar el acceso a mano desde el panel web.
 
+const fs = require('fs');
 const log = require('./log');
 const config = require('./config');
+const stateIndex = require('./stateIndex');
 
 // El desinstalador espera a que este proceso termine: sin tope, un servidor
 // que acepta la conexión y nunca responde dejaría la desinstalación colgada.
@@ -37,7 +39,21 @@ const desvincular = async () => {
   }
 
   config.borrar();
-  log.info('Configuración local borrada.');
+  stateIndex.borrarArchivo();
+  log.info('Configuración e índice de sincronización locales borrados.');
+};
+
+// `node src/unpair.js --todo` (pnpm run reset) además borra los logs, para
+// dejar el equipo como si Drivesidian nunca se hubiera usado. No toca las notas
+// del vault: son del usuario.
+const borrarLogs = () => {
+  for (const ruta of [log.logFile, `${log.logFile}.1`]) {
+    try {
+      fs.unlinkSync(ruta);
+    } catch {
+      /* ya no estaba */
+    }
+  }
 };
 
 // Nunca se sale con error: un fallo aquí no debe abortar la desinstalación.
@@ -46,4 +62,11 @@ const desvincular = async () => {
 // Windows, con Node 24, forzar la salida mientras la conexión del fetch se está
 // cerrando tumba el proceso con 0xC0000409 (una aserción de libuv en
 // src\win\async.c), después de haber revocado y borrado todo.
-desvincular().catch((err) => log.warn(`Desvinculación incompleta: ${err.message}`));
+desvincular()
+  .then(() => {
+    if (process.argv.includes('--todo')) {
+      borrarLogs();
+      console.log('Equipo restablecido: sin acceso, sin índice y sin logs.');
+    }
+  })
+  .catch((err) => log.warn(`Desvinculación incompleta: ${err.message}`));

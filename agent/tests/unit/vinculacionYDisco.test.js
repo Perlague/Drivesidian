@@ -163,6 +163,36 @@ describe('vinculación del equipo', () => {
     await assert.rejects(pairing.vincular('https://s'), /rechazó la solicitud de vinculación \(429\)/);
   });
 
+  it('si el servidor aún no responde al pedir el código, reintenta en vez de morir', async (t) => {
+    process.env.DRIVESIDIAN_PAIR_RETRY_MS = '1';
+    const vault = vaultTemporal();
+    registrarObsidian({ a: { path: vault, ts: 1 } });
+    const { pairing } = cargarPairing(t);
+    let intentos = 0;
+    t.mock.method(globalThis, 'fetch', async (url) => {
+      if (url.endsWith('/api/pairing/start')) {
+        intentos += 1;
+        if (intentos < 3) throw new Error('fetch failed');
+        return inicio();
+      }
+      return json(200, { data: { status: 'approved', token: 't', vault_path: vault } });
+    });
+    try {
+      assert.equal((await pairing.vincular('https://s')).agentToken, 't');
+    } finally {
+      delete process.env.DRIVESIDIAN_PAIR_RETRY_MS;
+    }
+    assert.equal(intentos, 3);
+  });
+
+  it('borrarArchivo elimina el índice de sincronización', () => {
+    stateIndex.registrar('Drivesidian/a.md', 'h', 1);
+    assert.ok(fs.existsSync(stateIndex.archivoIndice()));
+    stateIndex.borrarArchivo();
+    assert.equal(fs.existsSync(stateIndex.archivoIndice()), false);
+    assert.equal(stateIndex.estabaPresente(), false);
+  });
+
   it('si nadie aprueba antes de que caduque el código, se rinde', async (t) => {
     const { pairing } = cargarPairing(t);
     t.mock.method(globalThis, 'fetch', async (url) =>

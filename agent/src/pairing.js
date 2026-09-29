@@ -35,6 +35,36 @@ const abrirNavegador = (url) => {
 
 const dormir = (ms) => new Promise((r) => setTimeout(r, ms));
 
+// El instalador lanza el agente en cuanto termina, y en ese momento la red o el
+// túnel pueden no estar listos. Antes, un fallo de red al pedir el código
+// mataba el proceso y el navegador no salía hasta el siguiente inicio de
+// sesión. Ahora se reintenta hasta que el servidor responda.
+const ESPERA_REINTENTO_MS = Number(process.env.DRIVESIDIAN_PAIR_RETRY_MS) || 5000;
+const TOPE_REINTENTOS_MS = Number(process.env.DRIVESIDIAN_PAIR_RETRY_MAX_MS) || 10 * 60 * 1000;
+const TIEMPO_PETICION_MS = 15_000;
+
+const pedirCodigo = async (apiUrl, cuerpo) => {
+  const limite = Date.now() + TOPE_REINTENTOS_MS;
+  for (let intento = 1; ; intento += 1) {
+    try {
+      return await fetch(`${apiUrl}/api/pairing/start`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(cuerpo),
+        signal: AbortSignal.timeout(TIEMPO_PETICION_MS),
+      });
+    } catch (err) {
+      if (Date.now() >= limite) {
+        throw new Error(`No se pudo contactar al servidor (${apiUrl}): ${err.message}`);
+      }
+      if (intento === 1 || intento % 6 === 0) {
+        log.warn(`No se pudo contactar al servidor (${err.message}). Reintentando…`);
+      }
+      await dormir(ESPERA_REINTENTO_MS);
+    }
+  }
+};
+
 // Flujo device-code: el agente no tiene token todavía, así que pide un código,
 // manda al humano al navegador, y espera. El verifier se queda en esta máquina
 // y es lo que impide que quien vea el código en pantalla canjee el token.
@@ -49,14 +79,10 @@ const vincular = async (apiUrl) => {
       : 'No se detectó ningún vault de Obsidian en este equipo.',
   );
 
-  const inicio = await fetch(`${apiUrl}/api/pairing/start`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      verifier_hash: verifierHash,
-      device_name: os.hostname(),
-      vaults,
-    }),
+  const inicio = await pedirCodigo(apiUrl, {
+    verifier_hash: verifierHash,
+    device_name: os.hostname(),
+    vaults,
   });
 
   if (!inicio.ok) {
@@ -84,7 +110,7 @@ const vincular = async (apiUrl) => {
     try {
       respuesta = await fetch(
         `${apiUrl}/api/pairing/status?code=${encodeURIComponent(data.code)}`,
-        { headers: { 'X-Pair-Verifier': verifier } },
+        { headers: { 'X-Pair-Verifier': verifier }, signal: AbortSignal.timeout(TIEMPO_PETICION_MS) },
       );
     } catch {
       // Sin red: se sigue intentando hasta que el código caduque.

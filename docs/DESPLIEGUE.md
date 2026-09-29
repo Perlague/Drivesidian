@@ -260,6 +260,18 @@ git pull && docker compose up -d --build      # desplegar código nuevo
 Las migraciones se aplican solas en cada arranque. `node-pg-migrate` lleva su
 propio registro, así que correrlas de más es inofensivo.
 
+### Ver o restablecer la base
+
+```bash
+./scripts/db.sh estado    # usuarios, notas y accesos guardados
+./scripts/db.sh notas     # borra solo las notas
+./scripts/db.sh accesos   # revoca todos los agentes (obliga a revincular)
+./scripts/db.sh reset     # borra TODO (down -v) y la recrea vacía
+```
+
+`docker compose down` y reconstruir la imagen **conservan** la base: vive en el
+volumen `postgres-data`. Solo `reset` (o `down -v`) la vacía.
+
 ### Respaldos
 
 ```bash

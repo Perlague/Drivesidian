@@ -8,6 +8,8 @@
   "scripts": {
     "start": "node src/index.js",
     "unpair": "node src/unpair.js",
+    "reset": "node src/unpair.js --todo",
+    "token": "node src/manualToken.js",
     "test": "node tests/correr.js"
   },
   "engines": {
