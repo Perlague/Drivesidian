@@ -53,10 +53,15 @@
     <p class="pista margen-arriba">
       Para recibirlas en el celular, instala la app de
       <a href="https://ntfy.sh" target="_blank" rel="noopener noreferrer">ntfy</a>
-      y suscríbete a este canal escaneando el código:
+      y suscríbete a tu canal. Este código <strong>no es para Google
+      Authenticator</strong> (ese es el del segundo factor): escanéalo con la
+      cámara del celular para abrir el canal, o en la app ntfy toca
+      «+» y escribe el nombre del canal que aparece abajo.
     </p>
 
     <img class="qr" id="qr-ntfy" alt="Código QR para suscribirte a tus notificaciones" hidden />
+
+    <p class="pista">Nombre del canal: <code id="ntfy-topic"></code></p>
 
     <div class="secreto">
       <code id="ntfy-url"></code>

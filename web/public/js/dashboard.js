@@ -19,6 +19,8 @@ const cargarPerfil = async () => {
   interruptor.checked = res.data.notify_enabled;
   urlNtfy = res.data.ntfy_url;
   document.getElementById('ntfy-url').textContent = urlNtfy;
+  // El nombre del canal es lo que pide la app de ntfy al suscribirse a mano.
+  document.getElementById('ntfy-topic').textContent = urlNtfy.split('/').pop();
 
   const qr = document.getElementById('qr-ntfy');
   qr.src = res.data.ntfy_qr;
