@@ -56,6 +56,15 @@ feed() {
 # Solo warn y critical. Los info son contexto y nunca despiertan a Guardian.
 eventos=$(feed | grep 'drivesidian.security' | grep -E '"severity":"(warn|critical)"' || true)
 
+# GUARDIAN_DEBUG=1 ./scripts/guardian-watch.sh  -> cuenta lo que ve, sin despertar a nadie
+if [ "${GUARDIAN_DEBUG:-0}" = "1" ]; then
+  n=$(printf '%s' "$eventos" | grep -c . || true)
+  ult=$(cat "$DESPERTAR" 2>/dev/null || echo 0)
+  echo "debug: desde=$desde ahora=$ahora_iso warn/critical=$n enfriamiento_restante=$(( COOLDOWN - (ahora - ult) ))s" >&2
+  printf '%s\n' "$eventos" | grep -o '"occurred_at":"[^"]*","type":"[^"]*","severity":"[^"]*"' >&2 || true
+  exit 0
+fi
+
 if [ -z "$eventos" ]; then
   echo "$ahora_iso" > "$ULTIMA"
   exit 0
