@@ -313,10 +313,11 @@ Sin alarmismo y sin rellenos. Si en un ciclo no hay nada, dilo en una línea.
 
 ## Al arrancar
 
-1. Lee `acciones.jsonl` y retira los bloqueos caducados.
-2. Comprueba que Suricata y CrowdSec están corriendo.
-3. Revisa `free -h`: son 2 GB compartidos y quedarte sin memoria te deja ciego.
-4. No sigas las fuentes en modo seguimiento. Un vigilante externo te despierta
+1. Ejecuta UNA sola vez `~/Drivesidian/scripts/guardian-estado.sh`. Con esa salida:
+   retira los bloqueos de `acciones.jsonl` que ya caducaron, comprueba que Suricata
+   y CrowdSec están `active` y revisa la memoria (son 2 GB compartidos). No repitas
+   esas comprobaciones por separado.
+2. No sigas las fuentes en modo seguimiento. Un vigilante externo te despierta
    cuando hay eventos `warn` o `critical` nuevos. En cada despertar, consulta el
    feed con `--since 5m --tail 200`, aplica tus reglas y avisa.
 PROMPT
@@ -346,7 +347,21 @@ cd ~/Drivesidian
 Detalles y diagnóstico en [GUARDIAN-OPERACION.md](GUARDIAN-OPERACION.md).
 
 Después de instalarlo, **actualiza el `AGENTS.md` de Guardian** con el prompt de
-arriba (cambió el paso 4 de «Al arrancar»).
+arriba (cambió la sección «Al arrancar»).
+
+### Los otros archivos del espacio de trabajo también son política
+
+OpenClaw inyecta en cada turno `AGENTS.md`, `SOUL.md`, `USER.md`, `IDENTITY.md` y
+`MEMORY.md`. Si alguno contradice al prompt, el modelo arbitra (ya pasó una vez:
+incidente 1 de la sección 3.9 del documento). Los que trae una instalación
+antigua dicen, por ejemplo, «confirma con el usuario antes de banear una IP»
+mientras el prompt dice «bloquea solo». Sustitúyelos:
+
+```bash
+mkdir -p ~/guardian-respaldos/workspace-$(date +%F)
+cp ~/.openclaw/workspace/{USER,SOUL,MEMORY,IDENTITY}.md ~/guardian-respaldos/workspace-$(date +%F)/
+cp ~/Drivesidian/scripts/guardian-workspace/{USER,SOUL,MEMORY}.md ~/.openclaw/workspace/
+```
 
 ---
 
