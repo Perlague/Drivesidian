@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 #
-# Instala (o quita) el temporizador que ejecuta guardian-watch.sh cada minuto.
+# Instala (o quita) el temporizador que ejecuta guardian-watch.sh cada 30 segundos.
 #
 #   ./scripts/guardian-watch-install.sh            instala y arranca
 #   ./scripts/guardian-watch-install.sh quitar     lo detiene y lo borra
@@ -37,17 +37,19 @@ Type=oneshot
 Environment="PATH=$PATH"
 Environment="GUARDIAN_OPENCLAW=$OC"
 Environment="GUARDIAN_REPO=$HOME/Drivesidian"
+Environment="GUARDIAN_COOLDOWN=${GUARDIAN_COOLDOWN:-30}"
+Environment="GUARDIAN_MAX_POR_HORA=${GUARDIAN_MAX_POR_HORA:-60}"
 ExecStart=/bin/bash $RAIZ/scripts/guardian-watch.sh
 UNIT
 
     cat > "$UNIDADES/guardian-watch.timer" <<UNIT
 [Unit]
-Description=Revisa el feed de seguridad cada minuto
+Description=Revisa el feed de seguridad cada 30 segundos
 
 [Timer]
-OnBootSec=60
-OnUnitActiveSec=60
-AccuracySec=5s
+OnBootSec=30
+OnUnitActiveSec=30
+AccuracySec=2s
 
 [Install]
 WantedBy=timers.target
@@ -55,7 +57,9 @@ UNIT
 
     systemctl --user daemon-reload
     systemctl --user enable --now guardian-watch.timer
-    echo "Listo. Se ejecuta cada minuto."
+    # Si ya existía con otros valores, hay que reiniciarlo para que los tome.
+    systemctl --user restart guardian-watch.timer
+    echo "Listo. Se ejecuta cada 30 segundos (enfriamiento ${GUARDIAN_COOLDOWN:-30} s, tope ${GUARDIAN_MAX_POR_HORA:-60} despertares por hora)."
     echo "  Estado:  $0 estado"
     echo "  Log:     tail -f ~/security-audits/watch.log"
     ;;

@@ -46,12 +46,14 @@ Guardian no vigila por su cuenta: OpenClaw solo razona cuando recibe un turno.
 `scripts/guardian-watch.sh` lo despierta, sin usar tokens mientras todo está en
 calma:
 
-1. Cada minuto lee el feed de seguridad con un filtro de texto (sin modelo).
+1. Cada 30 segundos lee el feed de seguridad con un filtro de texto (sin modelo).
 2. Si hay eventos `warn` o `critical` nuevos, lanza **un turno nuevo** de
    Guardian con un mensaje fijo. El mensaje no lleva texto del feed: eso lo lee
    Guardian él mismo, con la Regla 0.
-3. Máximo un despertar cada 2 minutos; los eventos que quedaron en espera se
-   revisan en la siguiente pasada.
+3. Máximo un despertar cada 30 segundos y 60 por hora (el tope protege el costo
+   del modelo, riesgo R10). Los eventos que quedaron en espera se revisan en la
+   siguiente pasada. Se ajusta con `GUARDIAN_COOLDOWN` y `GUARDIAN_MAX_POR_HORA`
+   al correr `./scripts/guardian-watch-install.sh`.
 
 ```bash
 ./scripts/guardian-watch-install.sh            # instalar
@@ -66,6 +68,31 @@ texto que controla el atacante).
 Probarlo sin atacar: provoca un `warn` cualquiera (un login con contraseña
 incorrecta) y a la siguiente pasada debe aparecer una línea en `watch.log` y una
 respuesta de Guardian.
+
+## Pruebas reales: medirlas y llevarlas a la presentación
+
+1. **Desde otra red** (por ejemplo el punto de acceso del celular, para que Guardian
+   no bloquee tu propia IP), en Git Bash:
+   `./scripts/guardian-pruebas.sh https://<url-del-servidor>`.
+   Al final imprime, para cada escenario, el comando exacto con su ventana de
+   tiempo.
+2. **En la EC2**, pega ese comando. Espera a Guardian (`--esperar 45`) y lee solo
+   lo necesario:
+   ```bash
+   ./scripts/guardian-resultados.py --escenario A --desde <inicio> --hasta <fin> --esperar 45
+   ```
+   Junta hora, tipo y severidad de los eventos (nunca su contenido), los
+   despertares del vigilante, la respuesta de Guardian, las acciones de
+   `acciones.jsonl` y el estado de `ufw`, y calcula tres tiempos: detección,
+   vigilante y respuesta. Tapa correos e IPs (`--sin-censura` los deja). Guarda
+   una copia en `~/security-audits/corridas/`.
+3. **En la presentación**: diapositivas 9 y 10, botón *Corridas reales*, pega el
+   bloque `===CORRIDA-JSON===`. Cada corrida queda registrada por separado, con la
+   respuesta de Guardian. Se pueden repetir las pruebas todas las veces que
+   quieras.
+
+Los escenarios D y E no pasan por el script de ataques: se corren en la EC2 (ver
+el documento de Ciberseguridad, sección 3) y se agregan a mano en la misma ventana.
 
 ## Consultar el histórico de eventos
 

@@ -27,7 +27,8 @@ set -euo pipefail
 
 REPO="${GUARDIAN_REPO:-$HOME/Drivesidian}"
 DIR="${GUARDIAN_STATE_DIR:-$HOME/security-audits}"
-COOLDOWN="${GUARDIAN_COOLDOWN:-120}"          # segundos mínimos entre despertares
+COOLDOWN="${GUARDIAN_COOLDOWN:-30}"           # segundos mínimos entre despertares
+MAX_HORA="${GUARDIAN_MAX_POR_HORA:-60}"       # tope de despertares por hora (riesgo R10: costo)
 PRIMERA_VENTANA="${GUARDIAN_WINDOW_SECS:-90}" # cuánto mirar atrás en la primera pasada
 OPENCLAW="${GUARDIAN_OPENCLAW:-openclaw}"
 TIEMPO_TURNO="${GUARDIAN_TURN_TIMEOUT:-300}"
@@ -35,6 +36,8 @@ TIEMPO_TURNO="${GUARDIAN_TURN_TIMEOUT:-300}"
 mkdir -p "$DIR"
 ULTIMA="$DIR/.watch-ultima-revision"   # hasta cuándo se revisó el feed
 DESPERTAR="$DIR/.watch-ultimo-despertar"
+HISTORIAL="$DIR/.watch-despertares"     # una línea por despertar (epoch), últimas 3600 s
+AVISO_TOPE="$DIR/.watch-tope-avisado"
 LOG="$DIR/watch.log"
 
 # Una sola pasada a la vez.
@@ -77,6 +80,20 @@ if [ $((ahora - ultimo)) -lt "$COOLDOWN" ]; then
   exit 0
 fi
 
+# Tope por hora. Con un enfriamiento corto, un escáner que no para podría
+# despertar a Guardian cada 30 s todo el día y el costo del modelo se dispararía
+# (riesgo R10). Al llegar al tope NO se avanza la marca de revisión: los eventos
+# se atienden cuando baje la cuenta.
+touch "$HISTORIAL"
+awk -v lim="$((ahora - 3600))" '$1 > lim' "$HISTORIAL" > "$HISTORIAL.tmp" && mv "$HISTORIAL.tmp" "$HISTORIAL"
+if [ "$(wc -l < "$HISTORIAL")" -ge "$MAX_HORA" ]; then
+  if [ $((ahora - $(cat "$AVISO_TOPE" 2>/dev/null || echo 0))) -gt 3600 ]; then
+    echo "$ahora_iso tope de $MAX_HORA despertares por hora alcanzado; se pospone hasta que baje" >> "$LOG"
+    echo "$ahora" > "$AVISO_TOPE"
+  fi
+  exit 0
+fi
+
 # Al log solo van conteos por tipo: nunca las líneas crudas, que traen texto
 # del atacante.
 resumen=$(printf '%s\n' "$eventos" | grep -o '"type":"[^"]*"' | sort | uniq -c | tr '\n' ' ')
@@ -85,6 +102,7 @@ echo "$ahora_iso despertando a Guardian · critical=$criticos · $resumen" >> "$
 
 echo "$ahora_iso" > "$ULTIMA"
 echo "$ahora" > "$DESPERTAR"
+echo "$ahora" >> "$HISTORIAL"
 
 MENSAJE="Hay eventos de seguridad nuevos (warn o critical) en el feed desde $desde. Sigue tu procedimiento: consulta el feed con --since 5m y --tail 200, aplica tus reglas y umbrales, registra antes de actuar, y avísame en tres líneas."
 
