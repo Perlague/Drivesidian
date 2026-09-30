@@ -316,7 +316,9 @@ Sin alarmismo y sin rellenos. Si en un ciclo no hay nada, dilo en una línea.
 1. Lee `acciones.jsonl` y retira los bloqueos caducados.
 2. Comprueba que Suricata y CrowdSec están corriendo.
 3. Revisa `free -h`: son 2 GB compartidos y quedarte sin memoria te deja ciego.
-4. Empieza a seguir las tres fuentes.
+4. No sigas las fuentes en modo seguimiento. Un vigilante externo te despierta
+   cuando hay eventos `warn` o `critical` nuevos. En cada despertar, consulta el
+   feed con `--since 5m --tail 200`, aplica tus reglas y avisa.
 PROMPT
 ```
 
@@ -325,6 +327,26 @@ Comprueba que quedó completo:
 ```bash
 wc -l ~/guardian-prompt.md && head -5 ~/guardian-prompt.md
 ```
+
+---
+
+## Parte 5b — El vigilante que lo despierta
+
+OpenClaw solo razona cuando recibe un turno. Sin un disparador, Guardian no
+mira nada por su cuenta: solo responde cuando le escribes por `openclaw tui`.
+El vigilante es ese disparador. Sin tokens en calma: lee el feed con un filtro
+de texto y despierta a Guardian **solo** si hay eventos `warn` o `critical`.
+
+```bash
+cd ~/Drivesidian
+./scripts/guardian-watch-install.sh          # instala el temporizador (cada minuto)
+./scripts/guardian-watch-install.sh estado   # comprobar que corre
+```
+
+Detalles y diagnóstico en [GUARDIAN-OPERACION.md](GUARDIAN-OPERACION.md).
+
+Después de instalarlo, **actualiza el `AGENTS.md` de Guardian** con el prompt de
+arriba (cambió el paso 4 de «Al arrancar»).
 
 ---
 

@@ -40,6 +40,33 @@ journalctl --user -u openclaw-gateway.service --since "1 hour ago" --no-pager
 openclaw tui
 ```
 
+## Que Guardian actúe solo (el vigilante)
+
+Guardian no vigila por su cuenta: OpenClaw solo razona cuando recibe un turno.
+`scripts/guardian-watch.sh` lo despierta, sin usar tokens mientras todo está en
+calma:
+
+1. Cada minuto lee el feed de seguridad con un filtro de texto (sin modelo).
+2. Si hay eventos `warn` o `critical` nuevos, lanza **un turno nuevo** de
+   Guardian con un mensaje fijo. El mensaje no lleva texto del feed: eso lo lee
+   Guardian él mismo, con la Regla 0.
+3. Máximo un despertar cada 2 minutos; los eventos que quedaron en espera se
+   revisan en la siguiente pasada.
+
+```bash
+./scripts/guardian-watch-install.sh            # instalar
+./scripts/guardian-watch-install.sh estado     # ver temporizador y log
+./scripts/guardian-watch-install.sh quitar     # desinstalar
+tail -f ~/security-audits/watch.log            # cada despertar, con conteos por tipo
+```
+
+El log guarda solo conteos por tipo de evento, nunca las líneas crudas (traen
+texto que controla el atacante).
+
+Probarlo sin atacar: provoca un `warn` cualquiera (un login con contraseña
+incorrecta) y a la siguiente pasada debe aparecer una línea en `watch.log` y una
+respuesta de Guardian.
+
 ## Consultar el histórico de eventos
 
 ```bash
