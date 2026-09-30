@@ -6,6 +6,7 @@
 #   ./scripts/db.sh notas           Borra SOLO las notas; conserva cuentas y 2FA
 #   ./scripts/db.sh accesos         Revoca todos los accesos de agentes (fuerza a revincular)
 #   ./scripts/db.sh reset           Borra TODA la base y el volumen, y la recrea vacía
+#   ./scripts/db.sh admin <correo>  Convierte esa cuenta en administradora
 #
 # Las de borrado piden escribir «si». Con -y (p. ej. `./scripts/db.sh reset -y`)
 # no preguntan.
@@ -73,8 +74,16 @@ case "$CMD" in
     done
     estado
     ;;
+  admin)
+    CORREO="${2:-}"
+    [ -n "$CORREO" ] || { echo "Uso: $0 admin <correo>" >&2; exit 2; }
+    # El correo va como variable de psql y no pegado al SQL: así un correo con
+    # comillas no puede alterar la consulta.
+    printf "UPDATE users SET role = 'admin' WHERE email = :'correo' RETURNING id, email, role;\n" \
+      | psql_ -v correo="$CORREO"
+    ;;
   *)
-    echo "Uso: $0 {estado|notas|accesos|reset} [-y]" >&2
+    echo "Uso: $0 {estado|notas|accesos|reset|admin <correo>} [-y]" >&2
     exit 2
     ;;
 esac

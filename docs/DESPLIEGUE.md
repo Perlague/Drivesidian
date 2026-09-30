@@ -267,7 +267,13 @@ propio registro, así que correrlas de más es inofensivo.
 ./scripts/db.sh notas     # borra solo las notas
 ./scripts/db.sh accesos   # revoca todos los agentes (obliga a revincular)
 ./scripts/db.sh reset     # borra TODO (down -v) y la recrea vacía
+./scripts/db.sh admin <correo>   # convierte esa cuenta en administradora
 ```
+
+Para dejar todo listo para una demostración (intervalo de sincronización de 3 s,
+base vacía, estado de Guardian archivado y sin bloqueos de ensayos):
+`./scripts/preparar-presentacion.sh`. Para volver al intervalo normal:
+`INTERVALO_MS=300000 ./scripts/preparar-presentacion.sh --solo-intervalo`.
 
 `docker compose down` y reconstruir la imagen **conservan** la base: vive en el
 volumen `postgres-data`. Solo `reset` (o `down -v`) la vacía.
