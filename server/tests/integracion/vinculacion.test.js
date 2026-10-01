@@ -158,3 +158,37 @@ describe('los códigos caducan a los 10 minutos', () => {
     await esperarEventos('pairing.expired', { minimo: 2 });
   });
 });
+
+describe('vincular este equipo desde el panel', () => {
+  it('lista los códigos pendientes pedidos desde la misma IP, sin el verifier', async () => {
+    const { code } = await pedirCodigo();
+    const res = await pedir('GET', '/api/pairing/pending', { cookie: cookieDeSesion(conDosPasos) });
+    assert.equal(res.status, 200);
+    const encontrado = res.body.data.find((p) => p.code === code);
+    assert.ok(encontrado, 'el código recién pedido debe aparecer');
+    assert.equal(encontrado.device_name, 'Laptop de Ana');
+    assert.deepEqual(encontrado.vaults, ['Notas']);
+    assert.ok(!JSON.stringify(res.body).includes('verifier'));
+  });
+
+  it('no lista los que ya se aprobaron', async () => {
+    const { code } = await pedirCodigo();
+    await aprobar(conDosPasos, { code });
+    const res = await pedir('GET', '/api/pairing/pending', { cookie: cookieDeSesion(conDosPasos) });
+    assert.ok(!res.body.data.some((p) => p.code === code));
+  });
+
+  it('no lista los pedidos desde otra IP', async () => {
+    const { code } = await pedirCodigo();
+    await pool.query("UPDATE pairing_codes SET requester_ip = '203.0.113.9' WHERE code = $1", [code]);
+    const res = await pedir('GET', '/api/pairing/pending', { cookie: cookieDeSesion(conDosPasos) });
+    assert.ok(!res.body.data.some((p) => p.code === code));
+  });
+
+  it('exige sesión web', async () => {
+    const res = await pedir('GET', '/api/pairing/pending');
+    assert.equal(res.status, 401);
+    const agente = await pedir('GET', '/api/pairing/pending', { headers: { authorization: `Bearer ${await tokenDeAgente(conDosPasos.id)}` } });
+    assert.equal(agente.status, 403);
+  });
+});

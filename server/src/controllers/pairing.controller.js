@@ -55,6 +55,7 @@ const start = async (req, res) => {
         vaults: parsed.data.vaults,
         deviceName: parsed.data.device_name || null,
         ttlMs: PAIRING_TTL_MS,
+        requesterIp: req.ip || null,
       });
     } catch (err) {
       if (err.code !== '23505') throw err; // 23505 = violación de UNIQUE
@@ -249,4 +250,26 @@ const describe = async (req, res) => {
   });
 };
 
-module.exports = { start, status, approve, describe };
+// GET /api/pairing/pending — exclusivo de la sesión web. Lista los equipos que
+// esperan aprobación y pidieron su código desde la misma IP pública que este
+// navegador: es el respaldo de «Vincular este equipo» cuando el agente no logró
+// abrir el navegador. Aprobar sigue pasando por /pair y exige 2FA.
+//
+// Filtrar por IP evita mostrar equipos ajenos: en una red compartida (NAT de
+// una oficina o escuela) podrían aparecer los de otras personas, por eso la
+// página de aprobación muestra el nombre del equipo antes de confirmar.
+const pending = async (req, res) => {
+  if (req.auth.type !== 'user') {
+    return error(res, 'Este endpoint es exclusivo de la sesión web.', 403);
+  }
+  const rows = req.ip ? await pairingModel.findPendingByIp(req.ip) : [];
+  success(res, rows.map((r) => ({
+    code: r.code,
+    device_name: r.device_name,
+    vaults: (Array.isArray(r.vaults) ? r.vaults : []).map((v) => v.name),
+    created_at: r.created_at,
+    expires_at: r.expires_at,
+  })));
+};
+
+module.exports = { start, status, approve, describe, pending };

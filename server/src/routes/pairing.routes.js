@@ -4,7 +4,7 @@ const express = require('express');
 const requireAuth = require('../middleware/requireAuth');
 const rateLimit = require('../middleware/rateLimit');
 const { PAIRING_START_RATE_LIMIT, PAIRING_STATUS_RATE_LIMIT } = require('../config');
-const { start, status, approve, describe } = require('../controllers/pairing.controller');
+const { start, status, approve, describe, pending } = require('../controllers/pairing.controller');
 
 const router = express.Router();
 
@@ -25,6 +25,8 @@ router.get(
 
 // approve y describe sí exigen sesión web: los usa la página /pair.
 router.post('/approve', requireAuth, approve);
+// Antes de '/:code': si no, «pending» se tomaría como un código.
+router.get('/pending', requireAuth, pending);
 router.get('/:code', requireAuth, describe);
 
 module.exports = router;

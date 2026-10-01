@@ -3,15 +3,15 @@
 const pool = require('../db/pool');
 
 const COLUMNS = `id, code, verifier_hash, user_id, agent_token_id, vaults,
-                 selected_vault, device_name, created_at, expires_at,
+                 selected_vault, device_name, requester_ip, created_at, expires_at,
                  approved_at, consumed_at`;
 
-const create = async ({ code, verifierHash, vaults, deviceName, ttlMs }) => {
+const create = async ({ code, verifierHash, vaults, deviceName, ttlMs, requesterIp = null }) => {
   const result = await pool.query(
-    `INSERT INTO pairing_codes (code, verifier_hash, vaults, device_name, expires_at)
-     VALUES ($1, $2, $3, $4, now() + ($5 || ' milliseconds')::interval)
+    `INSERT INTO pairing_codes (code, verifier_hash, vaults, device_name, expires_at, requester_ip)
+     VALUES ($1, $2, $3, $4, now() + ($5 || ' milliseconds')::interval, $6)
      RETURNING ${COLUMNS}`,
-    [code, verifierHash, JSON.stringify(vaults), deviceName, String(ttlMs)],
+    [code, verifierHash, JSON.stringify(vaults), deviceName, String(ttlMs), requesterIp],
   );
   return result.rows[0];
 };
@@ -51,6 +51,24 @@ const consume = async (code, agentTokenId) => {
   return result.rows[0] || null;
 };
 
+// Códigos que siguen esperando aprobación y se pidieron desde esa IP. Es lo que
+// permite «Vincular este equipo» desde el panel cuando el navegador no se abrió
+// solo. Nunca devuelve el verifier_hash.
+const findPendingByIp = async (ip) => {
+  const result = await pool.query(
+    `SELECT code, device_name, vaults, created_at, expires_at
+     FROM pairing_codes
+     WHERE requester_ip = $1
+       AND approved_at IS NULL
+       AND consumed_at IS NULL
+       AND expires_at > now()
+     ORDER BY created_at DESC
+     LIMIT 5`,
+    [ip],
+  );
+  return result.rows;
+};
+
 // Los códigos caducados no sirven para nada; se podan junto con los eventos.
 const deleteExpired = async () => {
   const result = await pool.query(
@@ -59,4 +77,4 @@ const deleteExpired = async () => {
   return result.rowCount;
 };
 
-module.exports = { create, findByCode, approve, consume, deleteExpired };
+module.exports = { create, findByCode, findPendingByIp, approve, consume, deleteExpired };

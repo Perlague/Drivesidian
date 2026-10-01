@@ -170,3 +170,54 @@ document.getElementById('btn-sync').addEventListener('click', async (evento) => 
 
 cargarPerfil();
 cargarTokens();
+
+// --- Vincular este equipo ---
+// Respaldo para cuando el agente pidió su código pero no logró abrir el
+// navegador: el servidor busca equipos esperando aprobación desde esta misma
+// red y lleva a la página de aprobación de siempre (que exige 2FA).
+const pendientes = document.getElementById('pendientes');
+
+document.getElementById('btn-vincular').addEventListener('click', async (evento) => {
+  limpiarAviso(aviso);
+  pendientes.hidden = true;
+  pendientes.innerHTML = '';
+  evento.target.disabled = true;
+  const res = await API.get('/pairing/pending');
+  evento.target.disabled = false;
+
+  if (!res.ok) {
+    mostrarAviso(aviso, res.message);
+    return;
+  }
+
+  const lista = res.data;
+  if (lista.length === 0) {
+    mostrarAviso(
+      aviso,
+      'No hay ningún equipo esperando vinculación desde esta red. Asegúrate de que el agente esté corriendo en esta computadora (cierra sesión de Windows y vuelve a entrar) y vuelve a intentarlo en unos segundos. Cada solicitud dura 10 minutos.',
+      'atencion',
+    );
+    return;
+  }
+
+  if (lista.length === 1) {
+    window.location.href = `/pair?code=${encodeURIComponent(lista[0].code)}`;
+    return;
+  }
+
+  const titulo = document.createElement('p');
+  titulo.className = 'pista margen-arriba';
+  titulo.textContent = 'Hay varios equipos esperando. Elige el tuyo por su nombre:';
+  pendientes.appendChild(titulo);
+  for (const equipo of lista) {
+    const boton = document.createElement('button');
+    boton.type = 'button';
+    boton.className = 'secundario';
+    boton.textContent = `${equipo.device_name || 'equipo sin nombre'} · código ${equipo.code}`;
+    boton.addEventListener('click', () => {
+      window.location.href = `/pair?code=${encodeURIComponent(equipo.code)}`;
+    });
+    pendientes.appendChild(boton);
+  }
+  pendientes.hidden = false;
+});
